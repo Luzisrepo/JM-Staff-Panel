@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JM Solutions - Staff Panel</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    /* Existing styles kept */
+    body.locked main,
+    body.locked header,
+    body.locked nav {
+      display: none;
+    }
+
+    /* Login modal */
+    #loginModal {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 9999;
+    }
+    #loginModal .modal-content {
+      background: rgba(255,255,255,0.1);
+      padding: 2rem;
+      border-radius: 12px;
+      backdrop-filter: blur(12px);
+      width: 300px;
+      text-align: center;
+    }
+    #loginModal h2 { margin-bottom: 1rem; color: #4cc9f0; }
+    #loginModal input {
+      width: 100%;
+      padding: .8rem;
+      margin-bottom: 1rem;
+      border-radius: 8px;
+      border: none;
+    }
+    #loginModal button {
+      background: linear-gradient(135deg,#4cc9f0,#4361ee);
+      color: white;
+      padding: .8rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    #loginError {
+      color: #ff6b6b;
+      margin-top: 0.5rem;
+      display: none;
+    }
+  </style>
+</head>
+<body class="locked">
+  <div id="particles-js"></div>
+
+  <!-- LOGIN MODAL -->
+  <div id="loginModal">
+    <div class="modal-content">
+      <h2>Staff Login</h2>
+      <input type="email" id="loginEmail" placeholder="Email" required>
+      <input type="password" id="loginPassword" placeholder="Password" required>
+      <button id="loginBtn">Login</button>
+      <div id="loginError">Invalid login credentials</div>
+    </div>
+  </div>
+
+  <header>
+    <div class="logo"><i class="fas fa-cogs"></i><h1>JM Solutions - Staff Panel</h1></div>
+    <div class="user-info"><span id="userEmail"></span><div class="avatar"><i class="fas fa-user"></i></div></div>
+  </header>
+
+  <nav>
+    <ul class="nav-links">
+      <li><a href="#" class="nav-link active" data-target="absence"><i class="fas fa-calendar-times"></i> Absence Notice</a></li>
+      <li><a href="#" class="nav-link" data-target="bug"><i class="fas fa-bug"></i> Bug Report</a></li>
+      <li><a href="#" class="nav-link" data-target="suggestion"><i class="fas fa-lightbulb"></i> Suggestion</a></li>
+      <li><a href="#" class="nav-link" data-target="punishment"><i class="fas fa-gavel"></i> Punishment Log</a></li>
+      <li><a href="#" class="nav-link" data-target="ban"><i class="fas fa-ban"></i> Ban Request</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <section id="absence" class="form-container active">
+      <div class="glass-panel">
+        <h2><i class="fas fa-calendar-times"></i> Absence Notice</h2>
+        <form id="absenceForm">
+          <div class="form-group"><label>User ID</label><input type="text" id="absenceUserId" required placeholder="Enter your Discord ID"></div>
+          <div class="form-group"><label>Type</label>
+            <select id="inactivityType" required><option value="">Select</option><option>LOA</option><option>ROA</option></select></div>
+          <div class="form-group"><label>Start Date</label><input type="date" id="startDate" required></div>
+          <div class="form-group"><label>End Date</label><input type="date" id="endDate" required></div>
+          <div class="form-group"><label>Reason</label><textarea id="absenceReason" required></textarea></div>
+          <button class="btn">Submit</button>
+        </form>
+        <div class="success-message" id="absenceSuccess">Absence notice submitted!</div>
+      </div>
+    </section>
+
+    <section id="bug" class="form-container">
+      <div class="glass-panel">
+        <h2><i class="fas fa-bug"></i> Bug Report</h2>
+        <form id="bugForm">
+          <div class="form-group"><label>User ID</label><input type="text" id="bugUserId" required></div>
+          <div class="form-group"><label>Bug Type</label>
+            <select id="bugType" required><option>Discord</option><option>R6</option><option>BO6</option><option>Website</option><option>Other</option></select></div>
+          <div class="form-group"><label>Description</label><textarea id="bugDescription" required></textarea></div>
+          <button class="btn">Submit</button>
+        </form>
+        <div class="success-message" id="bugSuccess">Bug report submitted!</div>
+      </div>
+    </section>
+
+    <section id="suggestion" class="form-container">
+      <div class="glass-panel">
+        <h2><i class="fas fa-lightbulb"></i> Suggestion</h2>
+        <form id="suggestionForm">
+          <div class="form-group"><label>User ID</label><input type="text" id="suggestionUserId" required></div>
+          <div class="form-group"><label>Type</label>
+            <select id="suggestionType"><option>Discord</option><option>Software</option><option>Website</option><option>Community</option><option>Other</option></select></div>
+          <div class="form-group"><label>Description</label><textarea id="suggestionDescription" required></textarea></div>
+          <button class="btn">Submit</button>
+        </form>
+        <div class="success-message" id="suggestionSuccess">Suggestion submitted!</div>
+      </div>
+    </section>
+
+    <section id="punishment" class="form-container">
+      <div class="glass-panel">
+        <h2><i class="fas fa-gavel"></i> Punishment Log</h2>
+        <form id="punishmentForm">
+          <div class="form-group"><label>User ID</label><input type="text" id="punishmentUserId" required></div>
+          <div class="form-group"><label>Username</label><input type="text" id="punishmentUsername" required></div>
+          <div class="form-group"><label>Reason</label><textarea id="punishmentReason" required></textarea></div>
+          <div class="form-group"><label>Punishment</label>
+            <select id="punishmentType"><option>Warning</option><option>Mute</option><option>Kick</option><option>Temporary Ban</option><option>Permanent Ban</option></select></div>
+          <div class="form-group"><label>Proof URL</label><input type="url" id="punishmentProof" required></div>
+          <button class="btn">Submit</button>
+        </form>
+        <div class="success-message" id="punishmentSuccess">Punishment logged!</div>
+      </div>
+    </section>
+
+    <section id="ban" class="form-container">
+      <div class="glass-panel">
+        <h2><i class="fas fa-ban"></i> Ban Request</h2>
+        <form id="banForm">
+          <div class="form-group"><label>User ID</label><input type="text" id="banUserId" required></div>
+          <div class="form-group"><label>Username</label><input type="text" id="banUsername" required></div>
+          <div class="form-group"><label>Reason</label><textarea id="banReason" required></textarea></div>
+          <div class="form-group"><label>Proof URL</label><input type="url" id="banProof" required></div>
+          <button class="btn">Submit</button>
+        </form>
+        <div class="success-message" id="banSuccess">Ban request sent!</div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const { createClient } = supabase;
+    const supabaseClient = createClient(
+      "https://dsesdziaqinixvxycxye.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRzZXNkemlhcWluaXh2eHljeHllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg3MzMxODgsImV4cCI6MjA3NDMwOTE4OH0.SH26LQCsFuZitSgE5Og79p7NULOhSZVeZijaIH7b1BE"
+    );
+
+    const loginModal = document.getElementById("loginModal");
+    const loginBtn = document.getElementById("loginBtn");
+    const loginError = document.getElementById("loginError");
+
+    loginBtn.addEventListener("click", async () => {
+      const email = document.getElementById("loginEmail").value;
+      const password = document.getElementById("loginPassword").value;
+
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) {
+        loginError.style.display = "block";
+      } else {
+        document.body.classList.remove("locked");
+        loginModal.style.display = "none";
+        document.getElementById("userEmail").innerText = `Welcome, ${email}`;
+      }
+    });
+
+    // Check session on load
+    (async () => {
+      const { data } = await supabaseClient.auth.getSession();
+      if (data.session) {
+        document.body.classList.remove("locked");
+        loginModal.style.display = "none";
+        document.getElementById("userEmail").innerText = `Welcome, ${data.session.user.email}`;
+      }
+    })();
+  </script>
+</body>
+</html>
