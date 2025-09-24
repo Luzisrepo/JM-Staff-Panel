@@ -298,15 +298,19 @@
       margin: 0 auto;
     }
 
+    /* Fixed form container styles - only show active form */
     .form-container {
+      display: none;
       opacity: 0;
       transform: translateY(20px);
-      animation: fadeInUp 0.6s ease forwards;
-      animation-delay: 0.3s;
+      transition: opacity 0.3s ease, transform 0.3s ease;
     }
 
     .form-container.active {
       display: block;
+      opacity: 1;
+      transform: translateY(0);
+      animation: fadeInUp 0.6s ease forwards;
     }
 
     .glass-panel {
@@ -810,16 +814,27 @@
       loginForm.reset();
     });
     
-    // Navigation functionality
-    document.querySelectorAll('.nav-link').forEach(link => {
-      link.addEventListener('click', e => {
-        e.preventDefault();
-        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-        document.querySelectorAll('.form-container').forEach(f => f.classList.remove('active'));
-        link.classList.add('active');
-        document.getElementById(link.dataset.target).classList.add('active');
+    // Navigation functionality - Fixed to properly hide/show forms
+    function setupNavigation() {
+      document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', e => {
+          e.preventDefault();
+          
+          // Remove active class from all links and forms
+          document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+          document.querySelectorAll('.form-container').forEach(f => f.classList.remove('active'));
+          
+          // Add active class to clicked link
+          link.classList.add('active');
+          
+          // Show the corresponding form
+          const targetForm = document.getElementById(link.dataset.target);
+          if (targetForm) {
+            targetForm.classList.add('active');
+          }
+        });
       });
-    });
+    }
     
     // Webhook functionality (from original code)
     const webhooks = {
@@ -839,14 +854,17 @@
     }
 
     function setupForm(id, type, buildEmbed) {
-      document.getElementById(id).addEventListener("submit", async e => {
-        e.preventDefault();
-        const embed = buildEmbed();
-        await sendWebhook(type, embed);
-        document.getElementById(type+"Success").style.display="block";
-        e.target.reset();
-        setTimeout(() => document.getElementById(type+"Success").style.display="none", 3000);
-      });
+      const form = document.getElementById(id);
+      if (form) {
+        form.addEventListener("submit", async e => {
+          e.preventDefault();
+          const embed = buildEmbed();
+          await sendWebhook(type, embed);
+          document.getElementById(type+"Success").style.display="flex";
+          e.target.reset();
+          setTimeout(() => document.getElementById(type+"Success").style.display="none", 3000);
+        });
+      }
     }
 
     // Setup form handlers
@@ -908,6 +926,7 @@
     // Initialize the application
     document.addEventListener('DOMContentLoaded', () => {
       checkAuth();
+      setupNavigation();
       
       // Initialize particles.js if available
       if (window.particlesJS) {
