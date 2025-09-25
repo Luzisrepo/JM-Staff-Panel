@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JM Solutions - Staff Forums</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    /* Reuse all existing CSS from the previous page */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      color: #fff;
+      overflow-x: hidden;
+      position: relative;
+    }
+    #particles-js {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+    }
+    header {
+      padding: 1.5rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      animation: fadeInDown 0.8s ease;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .logo i {
+      font-size: 2.5rem;
+      color: #4cc9f0;
+    }
+    .logo h1 {
+      font-size: 1.8rem;
+      background: linear-gradient(90deg, #4cc9f0, #4361ee);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 700;
+    }
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #4cc9f0, #4361ee);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+    .logout-btn {
+      background: rgba(231, 76, 60, 0.2);
+      color: #e74c3c;
+      border: 1px solid rgba(231, 76, 60, 0.5);
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .logout-btn:hover {
+      background: rgba(231, 76, 60, 0.3);
+    }
+    nav {
+      padding: 1rem 2rem;
+      background: rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .nav-links {
+      display: flex;
+      gap: 1.5rem;
+      list-style: none;
+    }
+    .nav-links a {
+      color: #a0a0c0;
+      text-decoration: none;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .nav-links a:hover, .nav-links a.active {
+      color: #fff;
+      background: rgba(76, 201, 240, 0.2);
+    }
+    main {
+      padding: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .glass-panel {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 2rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      transition: all 0.3s ease;
+      margin-bottom: 2rem;
+    }
+    .glass-panel:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+    }
+    h2 {
+      font-size: 1.8rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      color: #4cc9f0;
+    }
+    h2 i {
+      font-size: 1.5rem;
+    }
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: #c0c0e0;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 0.8rem 1rem;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      color: #fff;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #4cc9f0;
+      box-shadow: 0 0 0 2px rgba(76, 201, 240, 0.2);
+    }
+    textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+    .btn {
+      background: linear-gradient(135deg, #4cc9f0, #4361ee);
+      color: white;
+      border: none;
+      padding: 0.8rem 1.5rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(76, 201, 240, 0.4);
+    }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid #4cc9f0;
+      color: #4cc9f0;
+    }
+    .btn-outline:hover {
+      background: rgba(76, 201, 240, 0.1);
+    }
+    .success-message {
+      background: rgba(46, 204, 113, 0.2);
+      border: 1px solid rgba(46, 204, 113, 0.5);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 1rem;
+      display: none;
+      align-items: center;
+      gap: 0.8rem;
+      animation: fadeIn 0.5s ease;
+    }
+    .error-message {
+      background: rgba(231, 76, 60, 0.2);
+      border: 1px solid rgba(231, 76, 60, 0.5);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 1rem;
+      display: none;
+      align-items: center;
+      gap: 0.8rem;
+    }
+    .success-message i, .error-message i {
+      font-size: 1.2rem;
+    }
+    .success-message i { color: #2ecc71; }
+    .error-message i { color: #e74c3c; }
+
+    /* Forum-specific styles */
+    .posts-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    .post-card {
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      padding: 1.5rem;
+      transition: all 0.3s ease;
+    }
+    .post-card:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(76, 201, 240, 0.3);
+    }
+    .post-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1rem;
+    }
+    .post-title {
+      font-size: 1.3rem;
+      color: #4cc9f0;
+      margin-bottom: 0.5rem;
+      word-wrap: break-word;
+    }
+    .post-meta {
+      font-size: 0.85rem;
+      color: #a0a0c0;
+      display: flex;
+      gap: 1rem;
+    }
+    .post-content {
+      color: #e0e0f0;
+      line-height: 1.6;
+      margin-bottom: 1rem;
+      word-wrap: break-word;
+    }
+    .post-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+    .tag {
+      background: rgba(76, 201, 240, 0.15);
+      color: #4cc9f0;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+    }
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      color: #a0a0c0;
+    }
+    .loading .spinner {
+      width: 30px;
+      height: 30px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-top: 3px solid #4cc9f0;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 1rem;
+    }
+
+    /* Animations */
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 768px) {
+      .nav-links { flex-wrap: wrap; justify-content: center; }
+      header { flex-direction: column; gap: 1rem; }
+      .user-info { align-self: flex-end; }
+      .post-header { flex-direction: column; gap: 0.5rem; }
+      .post-meta { flex-direction: column; gap: 0.25rem; }
+    }
+  </style>
+</head>
+<body>
+  <div id="particles-js"></div>
+  
+  <header>
+    <div class="logo">
+      <i class="fas fa-users"></i>
+      <h1>JM Solutions - Staff Forums</h1>
+    </div>
+    <div class="user-info">
+      <span>Welcome, <strong id="userName">Staff Member</strong></span>
+      <div class="avatar"><i class="fas fa-user"></i></div>
+      <button class="logout-btn" id="logoutBtn">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </button>
+    </div>
+  </header>
+
+  <nav>
+    <ul class="nav-links">
+      <li><a href="index.html"><i class="fas fa-home"></i> Staff Panel</a></li>
+      <li><a href="forums.html" class="active"><i class="fas fa-comments"></i> Forums</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <!-- New Post Form -->
+    <section class="glass-panel">
+      <h2><i class="fas fa-plus-circle"></i> Create New Post</h2>
+      <form id="postForm">
+        <div class="form-group">
+          <label for="postTitle">Title</label>
+          <input type="text" id="postTitle" required placeholder="Enter a title for your post">
+        </div>
+        <div class="form-group">
+          <label for="postContent">Content</label>
+          <textarea id="postContent" required placeholder="Write your post content here..."></textarea>
+        </div>
+        <div class="form-group">
+          <label for="postTags">Tags (Optional, comma-separated)</label>
+          <input type="text" id="postTags" placeholder="e.g., announcement, question, update">
+        </div>
+        <button type="submit" class="btn" id="submitBtn">
+          <i class="fas fa-paper-plane"></i> Publish Post
+        </button>
+      </form>
+      <div class="success-message" id="successMessage">
+        <i class="fas fa-check-circle"></i> Post published successfully!
+      </div>
+      <div class="error-message" id="errorMessage">
+        <i class="fas fa-exclamation-triangle"></i> <span id="errorText">An error occurred. Please try again.</span>
+      </div>
+    </section>
+
+    <!-- Posts Feed -->
+    <section>
+      <h2><i class="fas fa-stream"></i> Recent Discussions</h2>
+      <div class="posts-container" id="postsContainer">
+        <div class="loading">
+          <div class="spinner"></div>
+          <p>Loading posts...</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // Supabase configuration - Use your project details
+    const supabaseUrl = 'https://dsesdziaqinixvxycxye.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRzZXNkemlhcWluaXh2eHljeHllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg3MzMxODgsImV4cCI6MjA3NDMwOTE4OH0.SH26LQCsFuZitSgE5Og79p7NULOhSZVeZijaIH7b1BE';
+    
+    // Initialize Supabase client
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+    
+    // DOM elements
+    const postForm = document.getElementById('postForm');
+    const postsContainer = document.getElementById('postsContainer');
+    const successMessage = document.getElementById('successMessage');
+    const errorMessage = document.getElementById('errorMessage');
+    const errorText = document.getElementById('errorText');
+    const userName = document.getElementById('userName');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    // Check authentication state and load posts
+    async function initializeApp() {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session && session.user) {
+        userName.textContent = session.user.email || 'Staff Member';
+        loadPosts();
+      } else {
+        // Redirect to login if not authenticated
+        window.location.href = 'index.html';
+      }
+    }
+
+    // Load posts from Supabase
+    async function loadPosts() {
+      try {
+        const { data: posts, error } = await supabase
+          .from('staff_forum_posts')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        displayPosts(posts || []);
+      } catch (error) {
+        console.error('Error loading posts:', error);
+        postsContainer.innerHTML = '<p class="error-message">Error loading posts. Please refresh the page.</p>';
+      }
+    }
+
+    // Display posts in the container
+    function displayPosts(posts) {
+      if (posts.length === 0) {
+        postsContainer.innerHTML = '<div class="glass-panel"><p>No posts yet. Be the first to start a discussion!</p></div>';
+        return;
+      }
+
+      postsContainer.innerHTML = posts.map(post => `
+        <div class="post-card glass-panel">
+          <div class="post-header">
+            <div>
+              <h3 class="post-title">${escapeHtml(post.title)}</h3>
+              <div class="post-meta">
+                <span><i class="fas fa-user"></i> ${escapeHtml(post.author_name)}</span>
+                <span><i class="fas fa-clock"></i> ${formatDate(post.created_at)}</span>
+              </div>
+            </div>
+          </div>
+          <div class="post-content">${escapeHtml(post.content)}</div>
+          ${post.tags ? `
+            <div class="post-tags">
+              ${post.tags.split(',').map(tag => `<span class="tag">${escapeHtml(tag.trim())}</span>`).join('')}
+            </div>
+          ` : ''}
+        </div>
+      `).join('');
+    }
+
+    // Handle new post submission
+    postForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const title = document.getElementById('postTitle').value;
+      const content = document.getElementById('postContent').value;
+      const tags = document.getElementById('postTags').value;
+      const author = userName.textContent;
+
+      // Hide messages and show loading state
+      successMessage.style.display = 'none';
+      errorMessage.style.display = 'none';
+      const submitBtn = document.getElementById('submitBtn');
+      const originalText = submitBtn.innerHTML;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Publishing...';
+      submitBtn.disabled = true;
+
+      try {
+        const { data, error } = await supabase
+          .from('staff_forum_posts')
+          .insert([
+            { 
+              title: title, 
+              content: content, 
+              tags: tags, 
+              author_name: author 
+            }
+          ]);
+
+        if (error) throw error;
+
+        // Show success and reset form
+        successMessage.style.display = 'flex';
+        postForm.reset();
+        
+        // Reload posts to show the new one
+        loadPosts();
+        
+        // Hide success message after 3 seconds
+        setTimeout(() => {
+          successMessage.style.display = 'none';
+        }, 3000);
+        
+      } catch (error) {
+        console.error('Error creating post:', error);
+        errorText.textContent = error.message || 'Failed to create post. Please try again.';
+        errorMessage.style.display = 'flex';
+      } finally {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+      }
+    });
+
+    // Handle logout
+    logoutBtn.addEventListener('click', async () => {
+      await supabase.auth.signOut();
+      window.location.href = 'index.html';
+    });
+
+    // Utility functions
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function formatDate(dateString) {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    // Initialize the application when DOM is loaded
+    document.addEventListener('DOMContentLoaded', initializeApp);
+  </script>
+  
+  <!-- Particles.js library -->
+  <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+  <script>
+    // Initialize particles.js if available
+    if (window.particlesJS) {
+      particlesJS("particles-js", {
+        particles: {
+          number: { value: 80, density: { enable: true, value_area: 800 } },
+          color: { value: "#4cc9f0" },
+          shape: { type: "circle" },
+          opacity: { value: 0.5, random: true },
+          size: { value: 3, random: true },
+          line_linked: {
+            enable: true,
+            distance: 150,
+            color: "#4361ee",
+            opacity: 0.4,
+            width: 1
+          },
+          move: {
+            enable: true,
+            speed: 2,
+            direction: "none",
+            random: true,
+            straight: false,
+            out_mode: "out",
+            bounce: false
+          }
+        },
+        interactivity: {
+          detect_on: "canvas",
+          events: {
+            onhover: { enable: true, mode: "grab" },
+            onclick: { enable: true, mode: "push" }
+          }
+        },
+        retina_detect: true
+      });
+    }
+  </script>
+</body>
+</html>
