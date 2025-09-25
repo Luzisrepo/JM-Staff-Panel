@@ -285,6 +285,129 @@
       margin: 0 auto 1rem;
     }
 
+    /* Username Change Modal Styles */
+    .username-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(10px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1001;
+      opacity: 1;
+      transition: opacity 0.5s ease;
+    }
+    .username-modal.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .username-container {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 2rem;
+      width: 90%;
+      max-width: 450px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      transform: translateY(0);
+      transition: transform 0.6s ease, opacity 0.6s ease;
+      opacity: 1;
+    }
+    .username-modal.hidden .username-container {
+      transform: translateY(-50px);
+      opacity: 0;
+    }
+    .username-form h3 {
+      font-size: 1.5rem;
+      margin-bottom: 1.5rem;
+      color: #4cc9f0;
+      text-align: center;
+    }
+    .username-form .form-group {
+      margin-bottom: 1.5rem;
+    }
+    .username-form label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: #c0c0e0;
+    }
+    .username-form input {
+      width: 100%;
+      padding: 1rem;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      color: #fff;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+    .username-form input:focus {
+      outline: none;
+      border-color: #4cc9f0;
+      box-shadow: 0 0 0 2px rgba(76, 201, 240, 0.2);
+    }
+    .username-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #4cc9f0, #4361ee);
+      color: white;
+      border: none;
+      padding: 1rem;
+      border-radius: 10px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 1rem;
+    }
+    .username-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(76, 201, 240, 0.4);
+    }
+    .username-btn:active {
+      transform: translateY(0);
+    }
+    .username-error {
+      background: rgba(231, 76, 60, 0.2);
+      border: 1px solid rgba(231, 76, 60, 0.5);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 1rem;
+      display: none;
+      align-items: center;
+      gap: 0.8rem;
+      animation: shake 0.5s ease;
+    }
+    .username-error i {
+      color: #e74c3c;
+      font-size: 1.2rem;
+    }
+    .username-success {
+      background: rgba(46, 204, 113, 0.2);
+      border: 1px solid rgba(46, 204, 113, 0.5);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 1rem;
+      display: none;
+      align-items: center;
+      gap: 0.8rem;
+      animation: fadeIn 0.5s ease;
+    }
+    .username-success i {
+      color: #2ecc71;
+      font-size: 1.2rem;
+    }
+    .username-loading {
+      display: none;
+      text-align: center;
+      margin-top: 1rem;
+    }
+
     /* Animations */
     @keyframes fadeInDown {
       from { opacity: 0; transform: translateY(-20px); }
@@ -297,6 +420,11 @@
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
     }
 
     @media (max-width: 768px) {
@@ -311,6 +439,44 @@
 <body>
   <div id="particles-js"></div>
   
+  <!-- Username Change Modal -->
+  <div class="username-modal hidden" id="usernameModal">
+    <div class="username-container">
+      <form class="username-form" id="usernameForm">
+        <h3><i class="fas fa-user-edit"></i> Change Username</h3>
+        
+        <div class="form-group">
+          <label for="newUsername">New Username</label>
+          <input type="text" id="newUsername" required placeholder="Enter your new username">
+        </div>
+        
+        <div class="form-group">
+          <label for="confirmUsername">Confirm Username</label>
+          <input type="text" id="confirmUsername" required placeholder="Confirm your new username">
+        </div>
+        
+        <button type="submit" class="username-btn">
+          <i class="fas fa-save"></i> Update Username
+        </button>
+        
+        <div class="username-loading" id="usernameLoading">
+          <div class="spinner"></div>
+          <p>Updating username...</p>
+        </div>
+        
+        <div class="username-error" id="usernameError">
+          <i class="fas fa-exclamation-triangle"></i>
+          <span id="usernameErrorText">Error updating username. Please try again.</span>
+        </div>
+        
+        <div class="username-success" id="usernameSuccess">
+          <i class="fas fa-check-circle"></i>
+          <span>Username updated successfully!</span>
+        </div>
+      </form>
+    </div>
+  </div>
+  
   <header>
     <div class="logo">
       <i class="fas fa-users"></i>
@@ -319,20 +485,23 @@
     <div class="user-info">
       <span>Welcome, <strong id="userName">Staff Member</strong></span>
       <div class="avatar"><i class="fas fa-user"></i></div>
+      <button class="btn" id="changeUsernameBtn">
+        <i class="fas fa-user-edit"></i> Change Username
+      </button>
       <button class="logout-btn" id="logoutBtn">
         <i class="fas fa-sign-out-alt"></i> Logout
       </button>
     </div>
   </header>
 
-   <nav>
-        <ul class="nav-links">
-            <li><a href="index.html" class="active"><i class="fas fa-home"></i> Home</a></li>
-            <li><a href="forums.html"><i class="fas fa-comments"></i> Forums</a></li>
-            <li><a href="Panel.html"><i class="fa-solid fa-desktop"></i></i> Staff Panel</a></li>
-            <li><a href="blog.html"><i class="fa-solid fa-scroll"></i></i> Blog</a></li>
-        </ul>
-    </nav>
+  <nav>
+    <ul class="nav-links">
+      <li><a href="index.html"><i class="fas fa-home"></i> Home</a></li>
+      <li><a href="forums.html" class="active"><i class="fas fa-comments"></i> Forums</a></li>
+      <li><a href="Panel.html"><i class="fa-solid fa-desktop"></i> Staff Panel</a></li>
+      <li><a href="blog.html"><i class="fa-solid fa-scroll"></i> Blog</a></li>
+    </ul>
+  </nav>
 
   <main>
     <!-- New Post Form -->
@@ -391,17 +560,54 @@
     const errorText = document.getElementById('errorText');
     const userName = document.getElementById('userName');
     const logoutBtn = document.getElementById('logoutBtn');
+    const changeUsernameBtn = document.getElementById('changeUsernameBtn');
+    const usernameModal = document.getElementById('usernameModal');
+    const usernameForm = document.getElementById('usernameForm');
+    const usernameError = document.getElementById('usernameError');
+    const usernameErrorText = document.getElementById('usernameErrorText');
+    const usernameSuccess = document.getElementById('usernameSuccess');
+    const usernameLoading = document.getElementById('usernameLoading');
+
+    // Current user
+    let currentUser = null;
+    let currentUsername = null;
 
     // Check authentication state and load posts
     async function initializeApp() {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session && session.user) {
-        userName.textContent = session.user.email || 'Staff Member';
+        currentUser = session.user;
+        await loadUserProfile();
         loadPosts();
       } else {
         // Redirect to login if not authenticated
         window.location.href = 'index.html';
+      }
+    }
+
+    // Load user profile to get username
+    async function loadUserProfile() {
+      try {
+        // Try to fetch the username from user_profiles table
+        const { data: profile, error } = await supabase
+          .from('user_profiles')
+          .select('username')
+          .eq('id', currentUser.id)
+          .single();
+        
+        if (!error && profile) {
+          currentUsername = profile.username;
+          userName.textContent = profile.username;
+        } else {
+          // Fallback to metadata or email
+          currentUsername = currentUser.user_metadata?.username || currentUser.email || 'Staff Member';
+          userName.textContent = currentUsername;
+        }
+      } catch (error) {
+        // Final fallback
+        currentUsername = currentUser.email || 'Staff Member';
+        userName.textContent = currentUsername;
       }
     }
 
@@ -457,7 +663,6 @@
       const title = document.getElementById('postTitle').value;
       const content = document.getElementById('postContent').value;
       const tags = document.getElementById('postTags').value;
-      const author = userName.textContent;
 
       // Hide messages and show loading state
       successMessage.style.display = 'none';
@@ -475,7 +680,7 @@
               title: title, 
               content: content, 
               tags: tags, 
-              author_name: author 
+              author_name: currentUsername
             }
           ]);
 
@@ -500,6 +705,103 @@
       } finally {
         submitBtn.innerHTML = originalText;
         submitBtn.disabled = false;
+      }
+    });
+
+    // Handle username change button click
+    changeUsernameBtn.addEventListener('click', () => {
+      showUsernameModal();
+    });
+
+    // Show username change modal
+    function showUsernameModal() {
+      usernameModal.classList.remove('hidden');
+    }
+    
+    // Hide username change modal
+    function hideUsernameModal() {
+      usernameModal.classList.add('hidden');
+      usernameForm.reset();
+      usernameError.style.display = 'none';
+      usernameSuccess.style.display = 'none';
+    }
+    
+    // Handle username form submission
+    usernameForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const newUsername = document.getElementById('newUsername').value;
+      const confirmUsername = document.getElementById('confirmUsername').value;
+      
+      // Validate inputs
+      if (newUsername !== confirmUsername) {
+        usernameErrorText.textContent = 'Usernames do not match.';
+        usernameError.style.display = 'flex';
+        usernameSuccess.style.display = 'none';
+        return;
+      }
+      
+      if (newUsername.length < 3) {
+        usernameErrorText.textContent = 'Username must be at least 3 characters long.';
+        usernameError.style.display = 'flex';
+        usernameSuccess.style.display = 'none';
+        return;
+      }
+      
+      // Show loading state
+      usernameLoading.style.display = 'block';
+      usernameError.style.display = 'none';
+      usernameSuccess.style.display = 'none';
+      
+      try {
+        // Update user profile in the public.user_profiles table
+        const { data, error } = await supabase
+          .from('user_profiles')
+          .update({ 
+            username: newUsername,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', currentUser.id);
+        
+        if (error) {
+          throw error;
+        }
+        
+        // Also update user metadata in auth.users
+        const { error: metadataError } = await supabase.auth.updateUser({
+          data: { username: newUsername }
+        });
+        
+        if (metadataError) {
+          console.error('Error updating auth metadata:', metadataError);
+        }
+        
+        // Update the displayed username
+        currentUsername = newUsername;
+        userName.textContent = newUsername;
+        
+        // Show success message
+        usernameSuccess.style.display = 'flex';
+        usernameError.style.display = 'none';
+        
+        // Hide modal after 2 seconds
+        setTimeout(() => {
+          hideUsernameModal();
+        }, 2000);
+        
+      } catch (error) {
+        usernameErrorText.textContent = error.message;
+        usernameError.style.display = 'flex';
+        usernameSuccess.style.display = 'none';
+      } finally {
+        usernameLoading.style.display = 'none';
+      }
+    });
+    
+    // Close username modal when clicking outside
+    usernameModal.addEventListener('click', (e) => {
+      if (e.target === usernameModal) {
+        hideUsernameModal();
       }
     });
 
