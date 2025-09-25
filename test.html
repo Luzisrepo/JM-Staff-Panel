@@ -189,6 +189,15 @@
     .btn-outline:hover {
       background: rgba(76, 201, 240, 0.1);
     }
+    .btn-danger {
+      background: linear-gradient(135deg, #e74c3c, #c0392b);
+      color: white;
+      border: none;
+    }
+    .btn-danger:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4);
+    }
     .success-message {
       background: rgba(46, 204, 113, 0.2);
       border: 1px solid rgba(46, 204, 113, 0.5);
@@ -228,10 +237,16 @@
       border: 1px solid rgba(255, 255, 255, 0.07);
       padding: 1.5rem;
       transition: all 0.3s ease;
+      cursor: pointer;
+      position: relative;
     }
     .post-card:hover {
       background: rgba(255, 255, 255, 0.05);
       border-color: rgba(76, 201, 240, 0.3);
+    }
+    .post-card.pinned {
+      border-left: 4px solid #f1c40f;
+      background: rgba(241, 196, 15, 0.05);
     }
     .post-header {
       display: flex;
@@ -257,6 +272,25 @@
       margin-bottom: 1rem;
       word-wrap: break-word;
     }
+    .post-content h1, .post-content h2, .post-content h3 {
+      margin: 1rem 0;
+      color: #4cc9f0;
+    }
+    .post-content h1 {
+      font-size: 1.8rem;
+      border-bottom: 1px solid rgba(76, 201, 240, 0.3);
+      padding-bottom: 0.5rem;
+    }
+    .post-content h2 {
+      font-size: 1.5rem;
+    }
+    .post-content h3 {
+      font-size: 1.3rem;
+    }
+    .post-content strong {
+      font-weight: bold;
+      color: #fff;
+    }
     .post-tags {
       display: flex;
       flex-wrap: wrap;
@@ -269,6 +303,15 @@
       padding: 0.25rem 0.75rem;
       border-radius: 20px;
       font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .tag:hover {
+      background: rgba(76, 201, 240, 0.25);
+    }
+    .tag.active {
+      background: rgba(76, 201, 240, 0.4);
+      color: #fff;
     }
     .loading {
       text-align: center;
@@ -285,6 +328,140 @@
       margin: 0 auto 1rem;
     }
 
+    /* Post Actions */
+    .post-actions {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      display: flex;
+      gap: 0.5rem;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .post-card:hover .post-actions {
+      opacity: 1;
+    }
+    .post-action {
+      background: rgba(0, 0, 0, 0.5);
+      border: none;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .post-action:hover {
+      transform: scale(1.1);
+    }
+    .pin-action {
+      background: rgba(241, 196, 15, 0.3);
+      color: #f1c40f;
+    }
+    .pin-action.pinned {
+      background: rgba(241, 196, 15, 0.7);
+    }
+    .delete-action {
+      background: rgba(231, 76, 60, 0.3);
+      color: #e74c3c;
+    }
+
+    /* Filter Section */
+    .filter-section {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      align-items: center;
+    }
+    .filter-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .filter-input {
+      flex: 1;
+      min-width: 200px;
+    }
+    .filter-input input {
+      margin: 0;
+    }
+
+    /* Post Modal Styles */
+    .post-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(10px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1002;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .post-modal.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .post-modal-content {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 2rem;
+      width: 90%;
+      max-width: 800px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      transform: scale(0.9);
+      transition: transform 0.3s ease;
+    }
+    .post-modal.active .post-modal-content {
+      transform: scale(1);
+    }
+    .post-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .post-modal-title {
+      font-size: 1.8rem;
+      color: #4cc9f0;
+    }
+    .close-modal {
+      background: none;
+      border: none;
+      color: #a0a0c0;
+      font-size: 1.5rem;
+      cursor: pointer;
+      transition: color 0.3s ease;
+    }
+    .close-modal:hover {
+      color: #fff;
+    }
+    .post-modal-body {
+      line-height: 1.6;
+    }
+    .post-modal-meta {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      font-size: 0.9rem;
+      color: #a0a0c0;
+    }
+
     /* Username Change Modal Styles */
     .username-modal {
       position: fixed;
@@ -298,12 +475,13 @@
       justify-content: center;
       align-items: center;
       z-index: 1001;
-      opacity: 1;
-      transition: opacity 0.5s ease;
-    }
-    .username-modal.hidden {
       opacity: 0;
       pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .username-modal.active {
+      opacity: 1;
+      pointer-events: all;
     }
     .username-container {
       background: rgba(255, 255, 255, 0.1);
@@ -314,13 +492,11 @@
       width: 90%;
       max-width: 450px;
       box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-      transform: translateY(0);
-      transition: transform 0.6s ease, opacity 0.6s ease;
-      opacity: 1;
+      transform: scale(0.9);
+      transition: transform 0.3s ease;
     }
-    .username-modal.hidden .username-container {
-      transform: translateY(-50px);
-      opacity: 0;
+    .username-modal.active .username-container {
+      transform: scale(1);
     }
     .username-form h3 {
       font-size: 1.5rem;
@@ -433,14 +609,29 @@
       .user-info { align-self: flex-end; }
       .post-header { flex-direction: column; gap: 0.5rem; }
       .post-meta { flex-direction: column; gap: 0.25rem; }
+      .filter-section { flex-direction: column; align-items: flex-start; }
+      .filter-input { width: 100%; }
     }
   </style>
 </head>
 <body>
   <div id="particles-js"></div>
   
+  <!-- Post Modal Popup -->
+  <div class="post-modal" id="postModal">
+    <div class="post-modal-content">
+      <div class="post-modal-header">
+        <h2 class="post-modal-title" id="modalPostTitle"></h2>
+        <button class="close-modal" id="closeModal">&times;</button>
+      </div>
+      <div class="post-modal-meta" id="modalPostMeta"></div>
+      <div class="post-modal-body" id="modalPostContent"></div>
+      <div class="post-tags" id="modalPostTags"></div>
+    </div>
+  </div>
+  
   <!-- Username Change Modal -->
-  <div class="username-modal hidden" id="usernameModal">
+  <div class="username-modal" id="usernameModal">
     <div class="username-container">
       <form class="username-form" id="usernameForm">
         <h3><i class="fas fa-user-edit"></i> Change Username</h3>
@@ -514,7 +705,7 @@
         </div>
         <div class="form-group">
           <label for="postContent">Content</label>
-          <textarea id="postContent" required placeholder="Write your post content here..."></textarea>
+          <textarea id="postContent" required placeholder="Write your post content here... (Supports Discord formatting: **bold**, # Heading 1, ## Heading 2, ### Heading 3)"></textarea>
         </div>
         <div class="form-group">
           <label for="postTags">Tags (Optional, comma-separated)</label>
@@ -529,6 +720,23 @@
       </div>
       <div class="error-message" id="errorMessage">
         <i class="fas fa-exclamation-triangle"></i> <span id="errorText">An error occurred. Please try again.</span>
+      </div>
+    </section>
+
+    <!-- Filter Section -->
+    <section class="glass-panel">
+      <h2><i class="fas fa-filter"></i> Filter Posts</h2>
+      <div class="filter-section">
+        <div class="filter-tags">
+          <span class="tag active" data-tag="all">All Posts</span>
+          <span class="tag" data-tag="Update">Update</span>
+          <span class="tag" data-tag="Announcement">Announcement</span>
+          <span class="tag" data-tag="Tweak">Tweak</span>
+          <span class="tag" data-tag="Question">Question</span>
+        </div>
+        <div class="filter-input">
+          <input type="text" id="customTagFilter" placeholder="Search for custom tags...">
+        </div>
       </div>
     </section>
 
@@ -567,10 +775,31 @@
     const usernameErrorText = document.getElementById('usernameErrorText');
     const usernameSuccess = document.getElementById('usernameSuccess');
     const usernameLoading = document.getElementById('usernameLoading');
+    const postModal = document.getElementById('postModal');
+    const modalPostTitle = document.getElementById('modalPostTitle');
+    const modalPostMeta = document.getElementById('modalPostMeta');
+    const modalPostContent = document.getElementById('modalPostContent');
+    const modalPostTags = document.getElementById('modalPostTags');
+    const closeModal = document.getElementById('closeModal');
+    const customTagFilter = document.getElementById('customTagFilter');
+    const filterTags = document.querySelectorAll('.filter-tags .tag');
 
     // Current user
     let currentUser = null;
     let currentUsername = null;
+    let allPosts = [];
+    let currentFilter = 'all';
+
+    // Authorized emails for pinning and deleting
+    const authorizedEmails = [
+      'andrrr.discord@gmail.com',
+      'baddioyesyes123@gmail.com'
+    ];
+
+    // Check if current user is authorized
+    function isAuthorizedUser() {
+      return currentUser && authorizedEmails.includes(currentUser.email);
+    }
 
     // Check authentication state and load posts
     async function initializeApp() {
@@ -621,32 +850,98 @@
 
         if (error) throw error;
 
-        displayPosts(posts || []);
+        allPosts = posts || [];
+        applyFilter(currentFilter);
       } catch (error) {
         console.error('Error loading posts:', error);
         postsContainer.innerHTML = '<p class="error-message">Error loading posts. Please refresh the page.</p>';
       }
     }
 
+    // Apply filter to posts
+    function applyFilter(filter) {
+      let filteredPosts = [...allPosts];
+      
+      if (filter === 'all') {
+        // Show all posts
+      } else if (filter === 'custom') {
+        // Filter by custom tag search
+        const searchTerm = customTagFilter.value.toLowerCase().trim();
+        if (searchTerm) {
+          filteredPosts = filteredPosts.filter(post => 
+            post.tags && post.tags.toLowerCase().includes(searchTerm)
+          );
+        }
+      } else {
+        // Filter by predefined tag
+        filteredPosts = filteredPosts.filter(post => 
+          post.tags && post.tags.toLowerCase().includes(filter.toLowerCase())
+        );
+      }
+      
+      displayPosts(filteredPosts);
+    }
+
+    // Format text with Discord-like formatting
+    function formatText(text) {
+      // Convert **bold** to <strong>bold</strong>
+      text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      
+      // Convert # Heading 1 to <h1>Heading 1</h1>
+      text = text.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+      
+      // Convert ## Heading 2 to <h2>Heading 2</h2>
+      text = text.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+      
+      // Convert ### Heading 3 to <h3>Heading 3</h3>
+      text = text.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+      
+      // Preserve line breaks
+      text = text.replace(/\n/g, '<br>');
+      
+      return text;
+    }
+
     // Display posts in the container
     function displayPosts(posts) {
       if (posts.length === 0) {
-        postsContainer.innerHTML = '<div class="glass-panel"><p>No posts yet. Be the first to start a discussion!</p></div>';
+        postsContainer.innerHTML = '<div class="glass-panel"><p>No posts found matching your filter.</p></div>';
         return;
       }
 
-      postsContainer.innerHTML = posts.map(post => `
-        <div class="post-card glass-panel">
+      // Separate pinned and regular posts
+      const pinnedPosts = posts.filter(post => post.pinned);
+      const regularPosts = posts.filter(post => !post.pinned);
+      
+      // Sort pinned posts by date (newest first)
+      pinnedPosts.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      
+      // Combine posts (pinned first, then regular)
+      const sortedPosts = [...pinnedPosts, ...regularPosts];
+      
+      postsContainer.innerHTML = sortedPosts.map(post => `
+        <div class="post-card glass-panel ${post.pinned ? 'pinned' : ''}" data-post-id="${post.id}">
+          ${isAuthorizedUser() ? `
+            <div class="post-actions">
+              <button class="post-action pin-action ${post.pinned ? 'pinned' : ''}" data-post-id="${post.id}">
+                <i class="fas fa-thumbtack"></i>
+              </button>
+              <button class="post-action delete-action" data-post-id="${post.id}">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          ` : ''}
           <div class="post-header">
             <div>
               <h3 class="post-title">${escapeHtml(post.title)}</h3>
               <div class="post-meta">
                 <span><i class="fas fa-user"></i> ${escapeHtml(post.author_name)}</span>
                 <span><i class="fas fa-clock"></i> ${formatDate(post.created_at)}</span>
+                ${post.pinned ? '<span><i class="fas fa-thumbtack"></i> Pinned</span>' : ''}
               </div>
             </div>
           </div>
-          <div class="post-content">${escapeHtml(post.content)}</div>
+          <div class="post-content">${formatText(escapeHtml(post.content))}</div>
           ${post.tags ? `
             <div class="post-tags">
               ${post.tags.split(',').map(tag => `<span class="tag">${escapeHtml(tag.trim())}</span>`).join('')}
@@ -654,6 +949,109 @@
           ` : ''}
         </div>
       `).join('');
+      
+      // Add event listeners to post cards for modal
+      document.querySelectorAll('.post-card').forEach(card => {
+        card.addEventListener('click', (e) => {
+          // Don't open modal if clicking on actions
+          if (!e.target.closest('.post-actions')) {
+            const postId = card.getAttribute('data-post-id');
+            const post = allPosts.find(p => p.id == postId);
+            if (post) {
+              openPostModal(post);
+            }
+          }
+        });
+      });
+      
+      // Add event listeners to pin and delete buttons
+      if (isAuthorizedUser()) {
+        document.querySelectorAll('.pin-action').forEach(button => {
+          button.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const postId = button.getAttribute('data-post-id');
+            togglePinPost(postId);
+          });
+        });
+        
+        document.querySelectorAll('.delete-action').forEach(button => {
+          button.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const postId = button.getAttribute('data-post-id');
+            deletePost(postId);
+          });
+        });
+      }
+    }
+
+    // Toggle pin status of a post
+    async function togglePinPost(postId) {
+      try {
+        const post = allPosts.find(p => p.id == postId);
+        if (!post) return;
+        
+        const { error } = await supabase
+          .from('staff_forum_posts')
+          .update({ pinned: !post.pinned })
+          .eq('id', postId);
+          
+        if (error) throw error;
+        
+        // Reload posts to reflect the change
+        loadPosts();
+      } catch (error) {
+        console.error('Error toggling pin status:', error);
+        alert('Error updating post. Please try again.');
+      }
+    }
+
+    // Delete a post
+    async function deletePost(postId) {
+      if (!confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
+        return;
+      }
+      
+      try {
+        const { error } = await supabase
+          .from('staff_forum_posts')
+          .delete()
+          .eq('id', postId);
+          
+        if (error) throw error;
+        
+        // Remove post from local array and reload
+        allPosts = allPosts.filter(post => post.id != postId);
+        applyFilter(currentFilter);
+      } catch (error) {
+        console.error('Error deleting post:', error);
+        alert('Error deleting post. Please try again.');
+      }
+    }
+
+    // Open post modal
+    function openPostModal(post) {
+      modalPostTitle.textContent = post.title;
+      modalPostMeta.innerHTML = `
+        <span><i class="fas fa-user"></i> ${escapeHtml(post.author_name)}</span>
+        <span><i class="fas fa-clock"></i> ${formatDate(post.created_at)}</span>
+        ${post.pinned ? '<span><i class="fas fa-thumbtack"></i> Pinned</span>' : ''}
+      `;
+      modalPostContent.innerHTML = formatText(escapeHtml(post.content));
+      
+      if (post.tags) {
+        modalPostTags.innerHTML = post.tags.split(',').map(tag => 
+          `<span class="tag">${escapeHtml(tag.trim())}</span>`
+        ).join('');
+      } else {
+        modalPostTags.innerHTML = '';
+      }
+      
+      postModal.classList.add('active');
+    }
+
+    // Close post modal
+    function closePostModal() {
+      postModal.classList.remove('active');
     }
 
     // Handle new post submission
@@ -680,7 +1078,8 @@
               title: title, 
               content: content, 
               tags: tags, 
-              author_name: currentUsername
+              author_name: currentUsername,
+              pinned: false
             }
           ]);
 
@@ -715,12 +1114,12 @@
 
     // Show username change modal
     function showUsernameModal() {
-      usernameModal.classList.remove('hidden');
+      usernameModal.classList.add('active');
     }
     
     // Hide username change modal
     function hideUsernameModal() {
-      usernameModal.classList.add('hidden');
+      usernameModal.classList.remove('active');
       usernameForm.reset();
       usernameError.style.display = 'none';
       usernameSuccess.style.display = 'none';
@@ -798,11 +1197,45 @@
       }
     });
     
-    // Close username modal when clicking outside
+    // Close modals when clicking outside
     usernameModal.addEventListener('click', (e) => {
       if (e.target === usernameModal) {
         hideUsernameModal();
       }
+    });
+    
+    postModal.addEventListener('click', (e) => {
+      if (e.target === postModal) {
+        closePostModal();
+      }
+    });
+    
+    // Close post modal with close button
+    closeModal.addEventListener('click', closePostModal);
+
+    // Handle tag filtering
+    filterTags.forEach(tag => {
+      tag.addEventListener('click', () => {
+        // Remove active class from all tags
+        filterTags.forEach(t => t.classList.remove('active'));
+        
+        // Add active class to clicked tag
+        tag.classList.add('active');
+        
+        // Apply filter
+        currentFilter = tag.getAttribute('data-tag');
+        applyFilter(currentFilter);
+      });
+    });
+    
+    // Handle custom tag filtering
+    customTagFilter.addEventListener('input', () => {
+      // Remove active class from all predefined tags
+      filterTags.forEach(t => t.classList.remove('active'));
+      
+      // Apply custom filter
+      currentFilter = 'custom';
+      applyFilter(currentFilter);
     });
 
     // Handle logout
