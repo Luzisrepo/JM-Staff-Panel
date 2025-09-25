@@ -411,6 +411,145 @@
       font-size: 1.2rem;
     }
 
+    /* Username Change Modal Styles */
+    .username-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(10px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1001;
+      opacity: 1;
+      transition: opacity 0.5s ease;
+    }
+
+    .username-modal.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .username-container {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 2rem;
+      width: 90%;
+      max-width: 450px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      transform: translateY(0);
+      transition: transform 0.6s ease, opacity 0.6s ease;
+      opacity: 1;
+    }
+
+    .username-modal.hidden .username-container {
+      transform: translateY(-50px);
+      opacity: 0;
+    }
+
+    .username-form h3 {
+      font-size: 1.5rem;
+      margin-bottom: 1.5rem;
+      color: #4cc9f0;
+      text-align: center;
+    }
+
+    .username-form .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .username-form label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: #c0c0e0;
+    }
+
+    .username-form input {
+      width: 100%;
+      padding: 1rem;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      color: #fff;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    .username-form input:focus {
+      outline: none;
+      border-color: #4cc9f0;
+      box-shadow: 0 0 0 2px rgba(76, 201, 240, 0.2);
+    }
+
+    .username-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #4cc9f0, #4361ee);
+      color: white;
+      border: none;
+      padding: 1rem;
+      border-radius: 10px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 1rem;
+    }
+
+    .username-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(76, 201, 240, 0.4);
+    }
+
+    .username-btn:active {
+      transform: translateY(0);
+    }
+
+    .username-error {
+      background: rgba(231, 76, 60, 0.2);
+      border: 1px solid rgba(231, 76, 60, 0.5);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 1rem;
+      display: none;
+      align-items: center;
+      gap: 0.8rem;
+      animation: shake 0.5s ease;
+    }
+
+    .username-error i {
+      color: #e74c3c;
+      font-size: 1.2rem;
+    }
+
+    .username-success {
+      background: rgba(46, 204, 113, 0.2);
+      border: 1px solid rgba(46, 204, 113, 0.5);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 1rem;
+      display: none;
+      align-items: center;
+      gap: 0.8rem;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .username-success i {
+      color: #2ecc71;
+      font-size: 1.2rem;
+    }
+
+    .username-loading {
+      display: none;
+      text-align: center;
+      margin-top: 1rem;
+    }
+
     /* Animations */
     @keyframes fadeInDown {
       from {
@@ -533,6 +672,44 @@
     </div>
   </div>
 
+  <!-- Username Change Modal -->
+  <div class="username-modal hidden" id="usernameModal">
+    <div class="username-container">
+      <form class="username-form" id="usernameForm">
+        <h3><i class="fas fa-user-edit"></i> Change Username</h3>
+        
+        <div class="form-group">
+          <label for="newUsername">New Username</label>
+          <input type="text" id="newUsername" required placeholder="Enter your new username">
+        </div>
+        
+        <div class="form-group">
+          <label for="confirmUsername">Confirm Username</label>
+          <input type="text" id="confirmUsername" required placeholder="Confirm your new username">
+        </div>
+        
+        <button type="submit" class="username-btn">
+          <i class="fas fa-save"></i> Update Username
+        </button>
+        
+        <div class="username-loading" id="usernameLoading">
+          <div class="spinner"></div>
+          <p>Updating username...</p>
+        </div>
+        
+        <div class="username-error" id="usernameError">
+          <i class="fas fa-exclamation-triangle"></i>
+          <span id="usernameErrorText">Error updating username. Please try again.</span>
+        </div>
+        
+        <div class="username-success" id="usernameSuccess">
+          <i class="fas fa-check-circle"></i>
+          <span>Username updated successfully!</span>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Staff Panel (hidden by default) -->
   <div class="staff-panel" id="staffPanel">
     <div id="particles-js"></div>
@@ -544,6 +721,9 @@
       <div class="user-info">
         <span>Welcome, <strong id="userName">Staff Member</strong></span>
         <div class="avatar"><i class="fas fa-user"></i></div>
+        <button class="btn" id="changeUsernameBtn">
+          <i class="fas fa-user-edit"></i> Change Username
+        </button>
         <button class="logout-btn" id="logoutBtn">
           <i class="fas fa-sign-out-alt"></i> Logout
         </button>
@@ -738,7 +918,6 @@
     // Initialize Supabase client
     const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
     
-    // DOM elements
     const loginModal = document.getElementById('loginModal');
     const staffPanel = document.getElementById('staffPanel');
     const loginForm = document.getElementById('loginForm');
@@ -747,42 +926,60 @@
     const loading = document.getElementById('loading');
     const logoutBtn = document.getElementById('logoutBtn');
     const userName = document.getElementById('userName');
+    const changeUsernameBtn = document.getElementById('changeUsernameBtn');
+    const usernameModal = document.getElementById('usernameModal');
+    const usernameForm = document.getElementById('usernameForm');
+    const usernameError = document.getElementById('usernameError');
+    const usernameErrorText = document.getElementById('usernameErrorText');
+    const usernameSuccess = document.getElementById('usernameSuccess');
+    const usernameLoading = document.getElementById('usernameLoading');
     
-    // Check if user is already logged in
+    let currentUser = null;
+    
     async function checkAuth() {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session) {
-        showStaffPanel(session.user);
+        currentUser = session.user;
+        showStaffPanel(currentUser);
       } else {
         showLoginModal();
       }
     }
     
-    // Show login modal
     function showLoginModal() {
       loginModal.classList.remove('hidden');
       staffPanel.classList.remove('active');
+      usernameModal.classList.add('hidden');
     }
     
-    // Show staff panel
     function showStaffPanel(user) {
       loginModal.classList.add('hidden');
       staffPanel.classList.add('active');
       
       if (user) {
-        userName.textContent = user.email || 'Staff Member';
+        const displayName = user.user_metadata?.username || user.email || 'Staff Member';
+        userName.textContent = displayName;
       }
     }
     
-    // Handle login form submission
+    function showUsernameModal() {
+      usernameModal.classList.remove('hidden');
+    }
+    
+    function hideUsernameModal() {
+      usernameModal.classList.add('hidden');
+      usernameForm.reset();
+      usernameError.style.display = 'none';
+      usernameSuccess.style.display = 'none';
+    }
+    
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
       
-      // Show loading state
       loading.style.display = 'block';
       errorMessage.style.display = 'none';
       
@@ -797,6 +994,7 @@
         }
         
         if (data.user) {
+          currentUser = data.user;
           showStaffPanel(data.user);
         }
       } catch (error) {
@@ -807,27 +1005,86 @@
       }
     });
     
-    // Handle logout
     logoutBtn.addEventListener('click', async () => {
       await supabase.auth.signOut();
+      currentUser = null;
       showLoginModal();
       loginForm.reset();
     });
     
-    // Navigation functionality - Fixed to properly hide/show forms
+    changeUsernameBtn.addEventListener('click', () => {
+      showUsernameModal();
+    });
+    
+    usernameForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const newUsername = document.getElementById('newUsername').value;
+      const confirmUsername = document.getElementById('confirmUsername').value;
+      
+      if (newUsername !== confirmUsername) {
+        usernameErrorText.textContent = 'Usernames do not match.';
+        usernameError.style.display = 'flex';
+        usernameSuccess.style.display = 'none';
+        return;
+      }
+      
+      if (newUsername.length < 3) {
+        usernameErrorText.textContent = 'Username must be at least 3 characters long.';
+        usernameError.style.display = 'flex';
+        usernameSuccess.style.display = 'none';
+        return;
+      }
+      
+      usernameLoading.style.display = 'block';
+      usernameError.style.display = 'none';
+      usernameSuccess.style.display = 'none';
+      
+      try {
+        const { data, error } = await supabase.auth.updateUser({
+          data: { username: newUsername }
+        });
+        
+        if (error) {
+          throw error;
+        }
+        
+        if (data.user) {
+          currentUser = data.user;
+          userName.textContent = newUsername;
+          
+          usernameSuccess.style.display = 'flex';
+          usernameError.style.display = 'none';
+          
+          setTimeout(() => {
+            hideUsernameModal();
+          }, 2000);
+        }
+      } catch (error) {
+        usernameErrorText.textContent = error.message;
+        usernameError.style.display = 'flex';
+        usernameSuccess.style.display = 'none';
+      } finally {
+        usernameLoading.style.display = 'none';
+      }
+    });
+    
+    usernameModal.addEventListener('click', (e) => {
+      if (e.target === usernameModal) {
+        hideUsernameModal();
+      }
+    });
+    
     function setupNavigation() {
       document.querySelectorAll('.nav-link').forEach(link => {
         link.addEventListener('click', e => {
           e.preventDefault();
           
-          // Remove active class from all links and forms
           document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
           document.querySelectorAll('.form-container').forEach(f => f.classList.remove('active'));
           
-          // Add active class to clicked link
           link.classList.add('active');
           
-          // Show the corresponding form
           const targetForm = document.getElementById(link.dataset.target);
           if (targetForm) {
             targetForm.classList.add('active');
@@ -836,7 +1093,7 @@
       });
     }
     
-    // Webhook functionality (from original code)
+    
     const webhooks = {
       absence: "https://discord.com/api/webhooks/1420072611244675082/2esDQomqCju6I4Upw6GO-pNURkHjbVUKfQIzYIwiBMMH3_WVWodqVreS8u85Y1aKnzZL",
       bug: "https://discord.com/api/webhooks/1420072457699725435/ePrNpAuqeWqUsXV9eidMVwnaozYqikt21oP2ny8SftTQrXaas7gGAfbV6yrkylSZBG9_",
@@ -967,7 +1224,7 @@
     });
   </script>
   
-  <!-- Particles.js library -->
+  
   <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
 </body>
 </html>
