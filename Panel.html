@@ -1016,64 +1016,104 @@
       showUsernameModal();
     });
     
-    usernameForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      
-      const newUsername = document.getElementById('newUsername').value;
-      const confirmUsername = document.getElementById('confirmUsername').value;
-      
-      if (newUsername !== confirmUsername) {
-        usernameErrorText.textContent = 'Usernames do not match.';
-        usernameError.style.display = 'flex';
-        usernameSuccess.style.display = 'none';
-        return;
-      }
-      
-      if (newUsername.length < 3) {
-        usernameErrorText.textContent = 'Username must be at least 3 characters long.';
-        usernameError.style.display = 'flex';
-        usernameSuccess.style.display = 'none';
-        return;
-      }
-      
-      usernameLoading.style.display = 'block';
-      usernameError.style.display = 'none';
-      usernameSuccess.style.display = 'none';
-      
-      try {
-        const { data, error } = await supabase.auth.updateUser({
-          data: { username: newUsername }
-        });
-        
-        if (error) {
-          throw error;
-        }
-        
-        if (data.user) {
-          currentUser = data.user;
-          userName.textContent = newUsername;
-          
-          usernameSuccess.style.display = 'flex';
-          usernameError.style.display = 'none';
-          
-          setTimeout(() => {
-            hideUsernameModal();
-          }, 2000);
-        }
-      } catch (error) {
-        usernameErrorText.textContent = error.message;
-        usernameError.style.display = 'flex';
-        usernameSuccess.style.display = 'none';
-      } finally {
-        usernameLoading.style.display = 'none';
-      }
+    // Handle username form submission
+usernameForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const newUsername = document.getElementById('newUsername').value;
+  const confirmUsername = document.getElementById('confirmUsername').value;
+  
+  // Validate inputs
+  if (newUsername !== confirmUsername) {
+    usernameErrorText.textContent = 'Usernames do not match.';
+    usernameError.style.display = 'flex';
+    usernameSuccess.style.display = 'none';
+    return;
+  }
+  
+  if (newUsername.length < 3) {
+    usernameErrorText.textContent = 'Username must be at least 3 characters long.';
+    usernameError.style.display = 'flex';
+    usernameSuccess.style.display = 'none';
+    return;
+  }
+  
+  // Show loading state
+  usernameLoading.style.display = 'block';
+  usernameError.style.display = 'none';
+  usernameSuccess.style.display = 'none';
+  
+  try {
+    // Update user profile in the public.user_profiles table
+    const { data, error } = await supabase
+      .from('user_profiles')
+      .update({ 
+        username: newUsername,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', currentUser.id);
+    
+    if (error) {
+      throw error;
+    }
+    
+    // Also update user metadata in auth.users
+    const { error: metadataError } = await supabase.auth.updateUser({
+      data: { username: newUsername }
     });
     
-    usernameModal.addEventListener('click', (e) => {
-      if (e.target === usernameModal) {
-        hideUsernameModal();
+    if (metadataError) {
+      console.error('Error updating auth metadata:', metadataError);
+    }
+    
+    // Update the displayed username
+    userName.textContent = newUsername;
+    
+    // Show success message
+    usernameSuccess.style.display = 'flex';
+    usernameError.style.display = 'none';
+    
+    // Hide modal after 2 seconds
+    setTimeout(() => {
+      hideUsernameModal();
+    }, 2000);
+    
+  } catch (error) {
+    usernameErrorText.textContent = error.message;
+    usernameError.style.display = 'flex';
+    usernameSuccess.style.display = 'none';
+  } finally {
+    usernameLoading.style.display = 'none';
+  }
+});
+
+// Update the showStaffPanel function to fetch username from user_profiles
+async function showStaffPanel(user) {
+  loginModal.classList.add('hidden');
+  staffPanel.classList.add('active');
+  
+  if (user) {
+    try {
+      // Try to fetch the username from user_profiles table
+      const { data: profile, error } = await supabase
+        .from('user_profiles')
+        .select('username')
+        .eq('id', user.id)
+        .single();
+      
+      if (!error && profile) {
+        userName.textContent = profile.username;
+      } else {
+        // Fallback to metadata or email
+        const displayName = user.user_metadata?.username || user.email || 'Staff Member';
+        userName.textContent = displayName;
       }
-    });
+    } catch (error) {
+      // Final fallback
+      userName.textContent = user.email || 'Staff Member';
+    }
+  }
+}
     
     function setupNavigation() {
       document.querySelectorAll('.nav-link').forEach(link => {
