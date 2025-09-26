@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JM Solutions Staff - Live Chat</title>
+    
+    <!-- Include Supabase JS client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: #fff;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        #particles-js {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        header {
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            animation: fadeInDown 0.8s ease;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo i {
+            font-size: 2.5rem;
+            color: #4cc9f0;
+        }
+
+        .logo h1 {
+            font-size: 1.8rem;
+            background: linear-gradient(90deg, #4cc9f0, #4361ee);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 700;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4cc9f0, #4361ee);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #4cc9f0, #4361ee);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 201, 240, 0.4);
+        }
+
+        .logout-btn {
+            background: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+            border: 1px solid rgba(231, 76, 60, 0.5);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .logout-btn:hover {
+            background: rgba(231, 76, 60, 0.3);
+        }
+
+        nav {
+            padding: 1rem 2rem;
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            list-style: none;
+            justify-content: center;
+        }
+
+        .nav-links a {
+            color: #a0a0c0;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            color: #fff;
+            background: rgba(76, 201, 240, 0.2);
+        }
+
+        main {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .chat-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            height: 80vh;
+        }
+
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .message {
+            padding: 1rem;
+            border-radius: 12px;
+            max-width: 70%;
+            animation: fadeInUp 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message.self {
+            align-self: flex-end;
+            background: linear-gradient(135deg, #4cc9f0, #4361ee);
+            color: #fff;
+            text-align: right;
+        }
+
+        .message.other {
+            align-self: flex-start;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: left;
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .message.self .message-header {
+            justify-content: flex-end;
+        }
+
+        .message.other .message-header {
+            justify-content: flex-start;
+        }
+
+        .message-avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+        }
+
+        .message-sender {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .message-content {
+            font-size: 1rem;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+
+        .message-meta {
+            font-size: 0.7rem;
+            opacity: 0.7;
+            margin-top: 0.5rem;
+        }
+
+        .message.self .message-meta {
+            text-align: right;
+        }
+
+        .message.other .message-meta {
+            text-align: left;
+        }
+
+        .chat-input {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 0.8rem 1rem;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .chat-input input:focus {
+            outline: none;
+            border-color: #4cc9f0;
+            box-shadow: 0 0 0 2px rgba(76, 201, 240, 0.2);
+        }
+
+        .chat-input button {
+            background: linear-gradient(135deg, #4cc9f0, #4361ee);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .chat-input button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 201, 240, 0.4);
+        }
+
+        .chat-input button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .status {
+            text-align: center;
+            padding: 0.5rem;
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+
+        /* Username Change Modal Styles */
+        .username-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1001;
+            opacity: 1;
+            transition: opacity 0.5s ease;
+        }
+
+        .username-modal.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .username-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 2rem;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            transform: translateY(0);
+            transition: transform 0.6s ease, opacity 0.6s ease;
+            opacity: 1;
+        }
+
+        .username-modal.hidden .username-container {
+            transform: translateY(-50px);
+            opacity: 0;
+        }
+
+        .username-form h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: #4cc9f0;
+            text-align: center;
+        }
+
+        .username-form .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .username-form label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #c0c0e0;
+        }
+
+        .username-form input {
+            width: 100%;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            color: #fff;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .username-form input:focus {
+            outline: none;
+            border-color: #4cc9f0;
+            box-shadow: 0 0 0 2px rgba(76, 201, 240, 0.2);
+        }
+
+        .username-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #4cc9f0, #4361ee);
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+        }
+
+        .username-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(76, 201, 240, 0.4);
+        }
+
+        .username-btn:active {
+            transform: translateY(0);
+        }
+
+        .username-error {
+            background: rgba(231, 76, 60, 0.2);
+            border: 1px solid rgba(231, 76, 60, 0.5);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            display: none;
+            align-items: center;
+            gap: 0.8rem;
+            animation: shake 0.5s ease;
+        }
+
+        .username-error i {
+            color: #e74c3c;
+            font-size: 1.2rem;
+        }
+
+        .username-success {
+            background: rgba(46, 204, 113, 0.2);
+            border: 1px solid rgba(46, 204, 113, 0.5);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            display: none;
+            align-items: center;
+            gap: 0.8rem;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .username-success i {
+            color: #2ecc71;
+            font-size: 1.2rem;
+        }
+
+        .username-loading {
+            display: none;
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes shake {
+            0%, 100% {
+                transform: translateX(0);
+            }
+            25% {
+                transform: translateX(-5px);
+            }
+            75% {
+                transform: translateX(5px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Username Change Modal -->
+    <div class="username-modal hidden" id="usernameModal">
+        <div class="username-container">
+            <form class="username-form" id="usernameForm">
+                <h3><i class="fas fa-user-edit"></i> Change Username</h3>
+                
+                <div class="form-group">
+                    <label for="newUsername">New Username</label>
+                    <input type="text" id="newUsername" required placeholder="Enter your new username">
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirmUsername">Confirm Username</label>
+                    <input type="text" id="confirmUsername" required placeholder="Confirm your new username">
+                </div>
+                
+                <button type="submit" class="username-btn">
+                    <i class="fas fa-save"></i> Update Username
+                </button>
+                
+                <div class="username-loading" id="usernameLoading">
+                    <div class="spinner"></div>
+                    <p>Updating username...</p>
+                </div>
+                
+                <div class="username-error" id="usernameError">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span id="usernameErrorText">Error updating username. Please try again.</span>
+                </div>
+                
+                <div class="username-success" id="usernameSuccess">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Username updated successfully!</span>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div id="particles-js"></div>
+    
+    <header>
+        <div class="logo">
+            <i class="fas fa-comments"></i>
+            <h1>JM Solutions Staff - Live Chat</h1>
+        </div>
+        <div class="user-info">
+            <span>Welcome, <strong id="username">Guest</strong></span>
+            <div class="avatar"><i class="fas fa-user"></i></div>
+            <button class="btn" id="changeUsernameBtn">
+                <i class="fas fa-user-edit"></i> Change Username
+            </button>
+            <button class="logout-btn" id="logoutBtn">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
+    </header>
+
+    <nav>
+        <ul class="nav-links">
+            <li><a href="index.html"><i class="fas fa-home"></i> Home</a></li>
+            <li><a href="forums.html"><i class="fas fa-comments"></i> Forums</a></li>
+            <li><a href="Panel.html"><i class="fa-solid fa-desktop"></i> Staff Panel</a></li>
+            <li><a href="chat.html" class="active"><i class="fas fa-comment-dots"></i> Live Chat</a></li>
+        </ul>
+    </nav>
+    
+    <main>
+        <div class="chat-container">
+            <div class="messages" id="messages-container">
+                <div class="status" id="connection-status">Connecting to chat...</div>
+            </div>
+            
+            <div class="chat-input">
+                <input type="text" id="message-input" placeholder="Type your message..." maxlength="500">
+                <button id="send-button">Send</button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+// Supabase configuration - Use your actual credentials
+const SUPABASE_URL = 'https://dsesdziaqinixvxycxye.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRzZXNkemlhcWluaXh2eHljeHllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg3MzMxODgsImV4cCI6MjA3NDMwOTE4OH0.SH26LQCsFuZitSgE5Og79p7NULOhSZVeZijaIH7b1BE';
+
+// Initialize Supabase client
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// DOM elements
+const messagesContainer = document.getElementById('messages-container');
+const messageInput = document.getElementById('message-input');
+const sendButton = document.getElementById('send-button');
+const connectionStatus = document.getElementById('connection-status');
+const usernameElement = document.getElementById('username');
+const changeUsernameBtn = document.getElementById('changeUsernameBtn');
+const logoutBtn = document.getElementById('logoutBtn');
+const usernameModal = document.getElementById('usernameModal');
+const usernameForm = document.getElementById('usernameForm');
+const usernameError = document.getElementById('usernameError');
+const usernameErrorText = document.getElementById('usernameErrorText');
+const usernameSuccess = document.getElementById('usernameSuccess');
+const usernameLoading = document.getElementById('usernameLoading');
+
+// Current user and username
+let currentUser = null;
+let currentUsername = null;
+let channel = null;
+
+// Check authentication and initialize chat
+async function initializeApp() {
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (session && session.user) {
+        currentUser = session.user;
+        await loadUserProfile();
+        initializeChat();
+    } else {
+        // Redirect to login if not authenticated
+        window.location.href = 'index.html';
+    }
+}
+
+// Load user profile to get username
+async function loadUserProfile() {
+    try {
+        const { data: profile, error } = await supabase
+            .from('user_profiles')
+            .select('username')
+            .eq('id', currentUser.id)
+            .single();
+
+        if (!error && profile) {
+            currentUsername = profile.username;
+            usernameElement.textContent = profile.username;
+        } else {
+            currentUsername = currentUser.user_metadata?.username || currentUser.email || 'Staff Member';
+            usernameElement.textContent = currentUsername;
+        }
+    } catch (error) {
+        currentUsername = currentUser.email || 'Staff Member';
+        usernameElement.textContent = currentUsername;
+    }
+}
+
+// Initialize the chat
+async function initializeChat() {
+    try {
+        channel = supabase.channel('staff-chat', {
+            config: { broadcast: { self: true } }
+        });
+
+        // Listen for new messages in realtime
+        channel.on(
+            'postgres_changes',
+            {
+                event: 'INSERT',
+                schema: 'public',
+                table: 'staff_chat_messages'
+            },
+            (payload) => {
+                displayMessage(payload.new);
+            }
+        );
+
+        // Subscribe
+        channel.subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+                connectionStatus.textContent = 'Connected to chat';
+                connectionStatus.style.color = '#4cc9f0';
+                loadPreviousMessages();
+            } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+                connectionStatus.textContent = 'Connection error. Please refresh.';
+                connectionStatus.style.color = '#ff6b6b';
+            }
+        });
+
+    } catch (error) {
+        console.error('Error initializing chat:', error);
+        connectionStatus.textContent = 'Failed to connect. Please refresh.';
+        connectionStatus.style.color = '#ff6b6b';
+    }
+}
+
+// Load previous messages
+async function loadPreviousMessages() {
+    try {
+        const { data: messages, error } = await supabase
+            .from('staff_chat_messages')
+            .select('*')
+            .order('created_at', { ascending: true })
+            .limit(50);
+
+        if (error) throw error;
+
+        messagesContainer.innerHTML = '';
+        messages.forEach(msg => displayMessage(msg, false));
+        scrollToBottom();
+    } catch (error) {
+        console.error('Error loading messages:', error);
+    }
+}
+
+// Display a message
+function displayMessage(message, animate = true) {
+    const messageElement = document.createElement('div');
+    const isSelf = message.sender_id === currentUser.id;
+    messageElement.className = `message ${isSelf ? 'self' : 'other'}`;
+
+    const timestamp = new Date(message.created_at).toLocaleTimeString([], { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+    });
+
+    const initials = message.sender_name ? 
+        message.sender_name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) : '?';
+
+    messageElement.innerHTML = `
+        <div class="message-header">
+            <div class="message-avatar">${initials}</div>
+            <span class="message-sender">${escapeHtml(message.sender_name)}</span>
+        </div>
+        <div class="message-content">${escapeHtml(message.content)}</div>
+        <div class="message-meta">${timestamp}</div>
+    `;
+
+    if (animate) {
+        messageElement.style.animation = 'fadeInUp 0.3s ease';
+    }
+
+    messagesContainer.appendChild(messageElement);
+    scrollToBottom();
+}
+
+// Send message
+async function sendMessage() {
+    const content = messageInput.value.trim();
+    if (!content) return;
+
+    sendButton.disabled = true;
+    sendButton.textContent = 'Sending...';
+
+    try {
+        const { error } = await supabase
+            .from('staff_chat_messages')
+            .insert([{
+                content: content,
+                sender_id: currentUser.id,
+                sender_name: currentUsername
+            }]);
+
+        if (error) throw error;
+
+        messageInput.value = ''; // Clear input
+
+        // no loadPreviousMessages() here! realtime will handle it
+
+    } catch (error) {
+        console.error('Error sending message:', error);
+        alert('Failed to send message. Please try again.');
+    } finally {
+        sendButton.disabled = false;
+        sendButton.textContent = 'Send';
+    }
+}
+
+// Scroll to bottom
+function scrollToBottom() {
+    setTimeout(() => {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }, 100);
+}
+
+// Username modal
+function showUsernameModal() {
+    usernameModal.classList.remove('hidden');
+}
+function hideUsernameModal() {
+    usernameModal.classList.add('hidden');
+    usernameForm.reset();
+    usernameError.style.display = 'none';
+    usernameSuccess.style.display = 'none';
+}
+
+// Username change
+usernameForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const newUsername = document.getElementById('newUsername').value;
+    const confirmUsername = document.getElementById('confirmUsername').value;
+
+    if (newUsername !== confirmUsername) {
+        usernameErrorText.textContent = 'Usernames do not match.';
+        usernameError.style.display = 'flex';
+        usernameSuccess.style.display = 'none';
+        return;
+    }
+    if (newUsername.length < 3) {
+        usernameErrorText.textContent = 'Username must be at least 3 characters long.';
+        usernameError.style.display = 'flex';
+        usernameSuccess.style.display = 'none';
+        return;
+    }
+
+    usernameLoading.style.display = 'block';
+    usernameError.style.display = 'none';
+    usernameSuccess.style.display = 'none';
+
+    try {
+        const { error } = await supabase
+            .from('user_profiles')
+            .update({ username: newUsername, updated_at: new Date().toISOString() })
+            .eq('id', currentUser.id);
+
+        if (error) throw error;
+
+        const { error: metadataError } = await supabase.auth.updateUser({
+            data: { username: newUsername }
+        });
+        if (metadataError) console.error('Error updating auth metadata:', metadataError);
+
+        currentUsername = newUsername;
+        usernameElement.textContent = newUsername;
+        usernameSuccess.style.display = 'flex';
+        usernameError.style.display = 'none';
+
+        setTimeout(() => hideUsernameModal(), 2000);
+    } catch (error) {
+        usernameErrorText.textContent = error.message;
+        usernameError.style.display = 'flex';
+        usernameSuccess.style.display = 'none';
+    } finally {
+        usernameLoading.style.display = 'none';
+    }
+});
+
+// Close modal if clicking outside
+usernameModal.addEventListener('click', (e) => {
+    if (e.target === usernameModal) hideUsernameModal();
+});
+
+// Logout
+logoutBtn.addEventListener('click', async () => {
+    await supabase.auth.signOut();
+    window.location.href = 'index.html';
+});
+
+// Escape HTML
+function escapeHtml(unsafe) {
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+// Event listeners
+sendButton.addEventListener('click', sendMessage);
+messageInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') sendMessage();
+});
+changeUsernameBtn.addEventListener('click', showUsernameModal);
+
+// Init
+document.addEventListener('DOMContentLoaded', initializeApp);
+</script>
+</body>
+</html>
