@@ -7,7 +7,25 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    /* Reuse all existing CSS from the previous page */
+    /* Previous CSS remains the same, I'll just update the post-content styling */
+    
+    /* Updated post-content styling for better truncation */
+    .post-content {
+      color: #e0e0f0;
+      line-height: 1.6;
+      margin-bottom: 1rem;
+      word-wrap: break-word;
+      display: -webkit-box;
+      -webkit-line-clamp: 3; /* Limit to 3 lines */
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    /* Remove the previous gradient approach */
+    /* .post-content.truncated::after { ... } */
+    
+    /* Rest of your CSS remains unchanged */
     * {
       margin: 0;
       padding: 0;
@@ -265,23 +283,6 @@
       color: #a0a0c0;
       display: flex;
       gap: 1rem;
-    }
-    .post-content {
-      color: #e0e0f0;
-      line-height: 1.6;
-      margin-bottom: 1rem;
-      word-wrap: break-word;
-      max-height: 4.8em; /* Approximately 3 lines of text */
-      overflow: hidden;
-      position: relative;
-    }
-    .post-content.truncated::after {
-      content: '...';
-      position: absolute;
-      bottom: 0;
-      right: 0;
-      background: linear-gradient(90deg, transparent, rgba(26, 26, 46, 0.9) 50%);
-      padding-left: 1rem;
     }
     .post-content h1, .post-content h2, .post-content h3 {
       margin: 1rem 0;
@@ -932,21 +933,6 @@
       return text;
     }
 
-    // Truncate text to a specified length
-    function truncateText(text, maxLength = 200) {
-      if (text.length <= maxLength) return text;
-      
-      // Truncate to the last space within maxLength to avoid cutting words
-      let truncated = text.substr(0, maxLength);
-      const lastSpace = truncated.lastIndexOf(' ');
-      
-      if (lastSpace > maxLength * 0.7) { // Only truncate at space if it's not too far from the end
-        truncated = truncated.substr(0, lastSpace);
-      }
-      
-      return truncated + '...';
-    }
-
     // Display posts in the container
     function displayPosts(posts) {
       if (posts.length === 0) {
@@ -965,12 +951,8 @@
       const sortedPosts = [...pinnedPosts, ...regularPosts];
       
       postsContainer.innerHTML = sortedPosts.map(post => {
-        // Truncate content for preview if it's too long
-        const previewContent = post.content.length > 200 ? 
-          truncateText(escapeHtml(post.content)) : 
-          escapeHtml(post.content);
-          
-        const isTruncated = post.content.length > 200;
+        // Format the content for preview (CSS will handle truncation)
+        const previewContent = formatText(escapeHtml(post.content));
         
         return `
         <div class="post-card glass-panel ${post.pinned ? 'pinned' : ''}" data-post-id="${post.id}">
@@ -994,7 +976,7 @@
               </div>
             </div>
           </div>
-          <div class="post-content ${isTruncated ? 'truncated' : ''}">${formatText(previewContent)}</div>
+          <div class="post-content">${previewContent}</div>
           ${post.tags ? `
             <div class="post-tags">
               ${post.tags.split(',').map(tag => `<span class="tag">${escapeHtml(tag.trim())}</span>`).join('')}
