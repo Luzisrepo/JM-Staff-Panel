@@ -271,6 +271,17 @@
       line-height: 1.6;
       margin-bottom: 1rem;
       word-wrap: break-word;
+      max-height: 4.8em; /* Approximately 3 lines of text */
+      overflow: hidden;
+      position: relative;
+    }
+    .post-content.truncated::after {
+      content: '...';
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      background: linear-gradient(90deg, transparent, rgba(26, 26, 46, 0.9) 50%);
+      padding-left: 1rem;
     }
     .post-content h1, .post-content h2, .post-content h3 {
       margin: 1rem 0;
@@ -453,6 +464,25 @@
     }
     .post-modal-body {
       line-height: 1.6;
+    }
+    .post-modal-body h1, .post-modal-body h2, .post-modal-body h3 {
+      margin: 1rem 0;
+      color: #4cc9f0;
+    }
+    .post-modal-body h1 {
+      font-size: 1.8rem;
+      border-bottom: 1px solid rgba(76, 201, 240, 0.3);
+      padding-bottom: 0.5rem;
+    }
+    .post-modal-body h2 {
+      font-size: 1.5rem;
+    }
+    .post-modal-body h3 {
+      font-size: 1.3rem;
+    }
+    .post-modal-body strong {
+      font-weight: bold;
+      color: #fff;
     }
     .post-modal-meta {
       display: flex;
@@ -902,6 +932,21 @@
       return text;
     }
 
+    // Truncate text to a specified length
+    function truncateText(text, maxLength = 200) {
+      if (text.length <= maxLength) return text;
+      
+      // Truncate to the last space within maxLength to avoid cutting words
+      let truncated = text.substr(0, maxLength);
+      const lastSpace = truncated.lastIndexOf(' ');
+      
+      if (lastSpace > maxLength * 0.7) { // Only truncate at space if it's not too far from the end
+        truncated = truncated.substr(0, lastSpace);
+      }
+      
+      return truncated + '...';
+    }
+
     // Display posts in the container
     function displayPosts(posts) {
       if (posts.length === 0) {
@@ -919,7 +964,15 @@
       // Combine posts (pinned first, then regular)
       const sortedPosts = [...pinnedPosts, ...regularPosts];
       
-      postsContainer.innerHTML = sortedPosts.map(post => `
+      postsContainer.innerHTML = sortedPosts.map(post => {
+        // Truncate content for preview if it's too long
+        const previewContent = post.content.length > 200 ? 
+          truncateText(escapeHtml(post.content)) : 
+          escapeHtml(post.content);
+          
+        const isTruncated = post.content.length > 200;
+        
+        return `
         <div class="post-card glass-panel ${post.pinned ? 'pinned' : ''}" data-post-id="${post.id}">
           ${isAuthorizedUser() ? `
             <div class="post-actions">
@@ -941,14 +994,14 @@
               </div>
             </div>
           </div>
-          <div class="post-content">${formatText(escapeHtml(post.content))}</div>
+          <div class="post-content ${isTruncated ? 'truncated' : ''}">${formatText(previewContent)}</div>
           ${post.tags ? `
             <div class="post-tags">
               ${post.tags.split(',').map(tag => `<span class="tag">${escapeHtml(tag.trim())}</span>`).join('')}
             </div>
           ` : ''}
         </div>
-      `).join('');
+      `}).join('');
       
       // Add event listeners to post cards for modal
       document.querySelectorAll('.post-card').forEach(card => {
