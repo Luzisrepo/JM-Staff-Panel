@@ -562,346 +562,289 @@
     </main>
 
     <script>
-        // Supabase configuration - Use your actual credentials
-        const SUPABASE_URL = 'https://dsesdziaqinixvxycxye.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRzZXNkemlhcWluaXh2eHljeHllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg3MzMxODgsImV4cCI6MjA3NDMwOTE4OH0.SH26LQCsFuZitSgE5Og79p7NULOhSZVeZijaIH7b1BE';
-        
-        // Initialize Supabase client
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        
-        // DOM elements
-        const messagesContainer = document.getElementById('messages-container');
-        const messageInput = document.getElementById('message-input');
-        const sendButton = document.getElementById('send-button');
-        const connectionStatus = document.getElementById('connection-status');
-        const usernameElement = document.getElementById('username');
-        const changeUsernameBtn = document.getElementById('changeUsernameBtn');
-        const logoutBtn = document.getElementById('logoutBtn');
-        const usernameModal = document.getElementById('usernameModal');
-        const usernameForm = document.getElementById('usernameForm');
-        const usernameError = document.getElementById('usernameError');
-        const usernameErrorText = document.getElementById('usernameErrorText');
-        const usernameSuccess = document.getElementById('usernameSuccess');
-        const usernameLoading = document.getElementById('usernameLoading');
+// Supabase configuration - Use your actual credentials
+const SUPABASE_URL = 'https://dsesdziaqinixvxycxye.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRzZXNkemlhcWluaXh2eHljeHllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg3MzMxODgsImV4cCI6MjA3NDMwOTE4OH0.SH26LQCsFuZitSgE5Og79p7NULOhSZVeZijaIH7b1BE';
 
-        // Current user and username
-        let currentUser = null;
-        let currentUsername = null;
-        let channel = null;
+// Initialize Supabase client
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // Check authentication and initialize chat
-        async function initializeApp() {
-            const { data: { session } } = await supabase.auth.getSession();
-            
-            if (session && session.user) {
-                currentUser = session.user;
-                await loadUserProfile();
-                initializeChat();
-            } else {
-                // Redirect to login if not authenticated
-                window.location.href = 'index.html';
-            }
+// DOM elements
+const messagesContainer = document.getElementById('messages-container');
+const messageInput = document.getElementById('message-input');
+const sendButton = document.getElementById('send-button');
+const connectionStatus = document.getElementById('connection-status');
+const usernameElement = document.getElementById('username');
+const changeUsernameBtn = document.getElementById('changeUsernameBtn');
+const logoutBtn = document.getElementById('logoutBtn');
+const usernameModal = document.getElementById('usernameModal');
+const usernameForm = document.getElementById('usernameForm');
+const usernameError = document.getElementById('usernameError');
+const usernameErrorText = document.getElementById('usernameErrorText');
+const usernameSuccess = document.getElementById('usernameSuccess');
+const usernameLoading = document.getElementById('usernameLoading');
+
+// Current user and username
+let currentUser = null;
+let currentUsername = null;
+let channel = null;
+
+// Check authentication and initialize chat
+async function initializeApp() {
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (session && session.user) {
+        currentUser = session.user;
+        await loadUserProfile();
+        initializeChat();
+    } else {
+        // Redirect to login if not authenticated
+        window.location.href = 'index.html';
+    }
+}
+
+// Load user profile to get username
+async function loadUserProfile() {
+    try {
+        const { data: profile, error } = await supabase
+            .from('user_profiles')
+            .select('username')
+            .eq('id', currentUser.id)
+            .single();
+
+        if (!error && profile) {
+            currentUsername = profile.username;
+            usernameElement.textContent = profile.username;
+        } else {
+            currentUsername = currentUser.user_metadata?.username || currentUser.email || 'Staff Member';
+            usernameElement.textContent = currentUsername;
         }
-        
-        // Load user profile to get username
-        async function loadUserProfile() {
-            try {
-                // Try to fetch the username from user_profiles table
-                const { data: profile, error } = await supabase
-                    .from('user_profiles')
-                    .select('username')
-                    .eq('id', currentUser.id)
-                    .single();
-                
-                if (!error && profile) {
-                    currentUsername = profile.username;
-                    usernameElement.textContent = profile.username;
-                } else {
-                    // Fallback to metadata or email
-                    currentUsername = currentUser.user_metadata?.username || currentUser.email || 'Staff Member';
-                    usernameElement.textContent = currentUsername;
-                }
-            } catch (error) {
-                // Final fallback
-                currentUsername = currentUser.email || 'Staff Member';
-                usernameElement.textContent = currentUsername;
+    } catch (error) {
+        currentUsername = currentUser.email || 'Staff Member';
+        usernameElement.textContent = currentUsername;
+    }
+}
+
+// Initialize the chat
+async function initializeChat() {
+    try {
+        channel = supabase.channel('staff-chat', {
+            config: { broadcast: { self: true } }
+        });
+
+        // Listen for new messages in realtime
+        channel.on(
+            'postgres_changes',
+            {
+                event: 'INSERT',
+                schema: 'public',
+                table: 'staff_chat_messages'
+            },
+            (payload) => {
+                displayMessage(payload.new);
             }
-        }
-        
-        // Initialize the chat
-        async function initializeChat() {
-            try {
-                // Create a channel for real-time messages
-                channel = supabase.channel('staff-chat', {
-                    config: {
-                        broadcast: { self: true } // Allow users to see their own messages
-                    }
-                });
-                
-                // Subscribe to new messages
-                channel.on(
-                    'postgres_changes',
-                    {
-                        event: 'INSERT',
-                        schema: 'public',
-                        table: 'staff_chat_messages'
-                    },
-                    (payload) => {
-                        // Display the new message
-                        displayMessage(payload.new);
-                    }
-                );
-                
-                // Subscribe to the channel
-                channel.subscribe((status) => {
-                    if (status === 'SUBSCRIBED') {
-                        connectionStatus.textContent = 'Connected to chat';
-                        connectionStatus.style.color = '#4cc9f0';
-                        loadPreviousMessages();
-                    } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-                        connectionStatus.textContent = 'Connection error. Please refresh.';
-                        connectionStatus.style.color = '#ff6b6b';
-                    }
-                });
-                
-            } catch (error) {
-                console.error('Error initializing chat:', error);
-                connectionStatus.textContent = 'Failed to connect. Please refresh.';
+        );
+
+        // Subscribe
+        channel.subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+                connectionStatus.textContent = 'Connected to chat';
+                connectionStatus.style.color = '#4cc9f0';
+                loadPreviousMessages();
+            } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+                connectionStatus.textContent = 'Connection error. Please refresh.';
                 connectionStatus.style.color = '#ff6b6b';
             }
-        }
-        
-        // Load previous messages from the database
-        async function loadPreviousMessages() {
-            try {
-                const { data: messages, error } = await supabase
-                    .from('staff_chat_messages')
-                    .select('*')
-                    .order('created_at', { ascending: true })
-                    .limit(50);
-                
-                if (error) throw error;
-                
-                // Clear the loading message
-                messagesContainer.innerHTML = '';
-                
-                // Display each message
-                messages.forEach(message => {
-                    displayMessage(message, false); // No animation for old messages
-                });
-                
-                // Scroll to bottom
-                scrollToBottom();
-                
-            } catch (error) {
-                console.error('Error loading messages:', error);
-            }
-        }
-        
-        // Display a message in the chat
-        function displayMessage(message, animate = true) {
-            const messageElement = document.createElement('div');
-            const isSelf = message.sender_id === currentUser.id;
-            messageElement.className = `message ${isSelf ? 'self' : 'other'}`;
-            
-            // Format the timestamp
-            const timestamp = new Date(message.created_at).toLocaleTimeString([], { 
-                hour: '2-digit', 
-                minute: '2-digit' 
-            });
-            
-            // Get initials for avatar
-            const initials = message.sender_name ? 
-                message.sender_name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) : '?';
-            
-            messageElement.innerHTML = `
-                <div class="message-header">
-                    <div class="message-avatar">${initials}</div>
-                    <span class="message-sender">${escapeHtml(message.sender_name)}</span>
-                </div>
-                <div class="message-content">${escapeHtml(message.content)}</div>
-                <div class="message-meta">${timestamp}</div>
-            `;
-            
-            if (animate) {
-                messageElement.style.animation = 'fadeInUp 0.3s ease';
-            }
-            
-            messagesContainer.appendChild(messageElement);
-            scrollToBottom();
-        }
-        
-        // Send a new message
-        async function sendMessage() {
-            const content = messageInput.value.trim();
-            
-            if (!content) return;
-            
-            // Disable input while sending
-            sendButton.disabled = true;
-            sendButton.textContent = 'Sending...';
-            
-            try {
-                // Insert the message into the database
-                const { data, error } = await supabase
-                    .from('staff_chat_messages')
-                    .insert([
-                        {
-                            content: content,
-                            sender_id: currentUser.id,
-                            sender_name: currentUsername
-                        }
-                    ])
-                    .select();
-                
-                if (error) throw error;
-                
-                // Clear the input
-                messageInput.value = '';
-                
-                // Force a refresh of messages to ensure the new message appears
-                setTimeout(() => {
-                    loadPreviousMessages();
-                }, 100);
-                
-            } catch (error) {
-                console.error('Error sending message:', error);
-                alert('Failed to send message. Please try again.');
-            } finally {
-                // Re-enable input
-                sendButton.disabled = false;
-                sendButton.textContent = 'Send';
-            }
-        }
-        
-        // Scroll to the bottom of the messages container
-        function scrollToBottom() {
-            setTimeout(() => {
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            }, 100);
-        }
-        
-        // Show username change modal
-        function showUsernameModal() {
-            usernameModal.classList.remove('hidden');
-        }
-        
-        // Hide username change modal
-        function hideUsernameModal() {
-            usernameModal.classList.add('hidden');
-            usernameForm.reset();
-            usernameError.style.display = 'none';
-            usernameSuccess.style.display = 'none';
-        }
-        
-        // Handle username form submission
-        usernameForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const newUsername = document.getElementById('newUsername').value;
-            const confirmUsername = document.getElementById('confirmUsername').value;
-            
-            // Validate inputs
-            if (newUsername !== confirmUsername) {
-                usernameErrorText.textContent = 'Usernames do not match.';
-                usernameError.style.display = 'flex';
-                usernameSuccess.style.display = 'none';
-                return;
-            }
-            
-            if (newUsername.length < 3) {
-                usernameErrorText.textContent = 'Username must be at least 3 characters long.';
-                usernameError.style.display = 'flex';
-                usernameSuccess.style.display = 'none';
-                return;
-            }
-            
-            // Show loading state
-            usernameLoading.style.display = 'block';
-            usernameError.style.display = 'none';
-            usernameSuccess.style.display = 'none';
-            
-            try {
-                // Update user profile in the public.user_profiles table
-                const { data, error } = await supabase
-                    .from('user_profiles')
-                    .update({ 
-                        username: newUsername,
-                        updated_at: new Date().toISOString()
-                    })
-                    .eq('id', currentUser.id);
-                
-                if (error) {
-                    throw error;
-                }
-                
-                // Also update user metadata in auth.users
-                const { error: metadataError } = await supabase.auth.updateUser({
-                    data: { username: newUsername }
-                });
-                
-                if (metadataError) {
-                    console.error('Error updating auth metadata:', metadataError);
-                }
-                
-                // Update the displayed username
-                currentUsername = newUsername;
-                usernameElement.textContent = newUsername;
-                
-                // Show success message
-                usernameSuccess.style.display = 'flex';
-                usernameError.style.display = 'none';
-                
-                // Hide modal after 2 seconds
-                setTimeout(() => {
-                    hideUsernameModal();
-                }, 2000);
-                
-            } catch (error) {
-                usernameErrorText.textContent = error.message;
-                usernameError.style.display = 'flex';
-                usernameSuccess.style.display = 'none';
-            } finally {
-                usernameLoading.style.display = 'none';
-            }
-        });
-        
-        // Close username modal when clicking outside
-        usernameModal.addEventListener('click', (e) => {
-            if (e.target === usernameModal) {
-                hideUsernameModal();
-            }
-        });
-        
-        // Handle logout
-        logoutBtn.addEventListener('click', async () => {
-            await supabase.auth.signOut();
-            window.location.href = 'index.html';
         });
 
-        // Utility function to escape HTML
-        function escapeHtml(unsafe) {
-            return unsafe
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
-        
-        // Event listeners
-        sendButton.addEventListener('click', sendMessage);
-        
-        messageInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                sendMessage();
-            }
+    } catch (error) {
+        console.error('Error initializing chat:', error);
+        connectionStatus.textContent = 'Failed to connect. Please refresh.';
+        connectionStatus.style.color = '#ff6b6b';
+    }
+}
+
+// Load previous messages
+async function loadPreviousMessages() {
+    try {
+        const { data: messages, error } = await supabase
+            .from('staff_chat_messages')
+            .select('*')
+            .order('created_at', { ascending: true })
+            .limit(50);
+
+        if (error) throw error;
+
+        messagesContainer.innerHTML = '';
+        messages.forEach(msg => displayMessage(msg, false));
+        scrollToBottom();
+    } catch (error) {
+        console.error('Error loading messages:', error);
+    }
+}
+
+// Display a message
+function displayMessage(message, animate = true) {
+    const messageElement = document.createElement('div');
+    const isSelf = message.sender_id === currentUser.id;
+    messageElement.className = `message ${isSelf ? 'self' : 'other'}`;
+
+    const timestamp = new Date(message.created_at).toLocaleTimeString([], { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+    });
+
+    const initials = message.sender_name ? 
+        message.sender_name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) : '?';
+
+    messageElement.innerHTML = `
+        <div class="message-header">
+            <div class="message-avatar">${initials}</div>
+            <span class="message-sender">${escapeHtml(message.sender_name)}</span>
+        </div>
+        <div class="message-content">${escapeHtml(message.content)}</div>
+        <div class="message-meta">${timestamp}</div>
+    `;
+
+    if (animate) {
+        messageElement.style.animation = 'fadeInUp 0.3s ease';
+    }
+
+    messagesContainer.appendChild(messageElement);
+    scrollToBottom();
+}
+
+// Send message
+async function sendMessage() {
+    const content = messageInput.value.trim();
+    if (!content) return;
+
+    sendButton.disabled = true;
+    sendButton.textContent = 'Sending...';
+
+    try {
+        const { error } = await supabase
+            .from('staff_chat_messages')
+            .insert([{
+                content: content,
+                sender_id: currentUser.id,
+                sender_name: currentUsername
+            }]);
+
+        if (error) throw error;
+
+        messageInput.value = ''; // Clear input
+
+        // no loadPreviousMessages() here! realtime will handle it
+
+    } catch (error) {
+        console.error('Error sending message:', error);
+        alert('Failed to send message. Please try again.');
+    } finally {
+        sendButton.disabled = false;
+        sendButton.textContent = 'Send';
+    }
+}
+
+// Scroll to bottom
+function scrollToBottom() {
+    setTimeout(() => {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }, 100);
+}
+
+// Username modal
+function showUsernameModal() {
+    usernameModal.classList.remove('hidden');
+}
+function hideUsernameModal() {
+    usernameModal.classList.add('hidden');
+    usernameForm.reset();
+    usernameError.style.display = 'none';
+    usernameSuccess.style.display = 'none';
+}
+
+// Username change
+usernameForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const newUsername = document.getElementById('newUsername').value;
+    const confirmUsername = document.getElementById('confirmUsername').value;
+
+    if (newUsername !== confirmUsername) {
+        usernameErrorText.textContent = 'Usernames do not match.';
+        usernameError.style.display = 'flex';
+        usernameSuccess.style.display = 'none';
+        return;
+    }
+    if (newUsername.length < 3) {
+        usernameErrorText.textContent = 'Username must be at least 3 characters long.';
+        usernameError.style.display = 'flex';
+        usernameSuccess.style.display = 'none';
+        return;
+    }
+
+    usernameLoading.style.display = 'block';
+    usernameError.style.display = 'none';
+    usernameSuccess.style.display = 'none';
+
+    try {
+        const { error } = await supabase
+            .from('user_profiles')
+            .update({ username: newUsername, updated_at: new Date().toISOString() })
+            .eq('id', currentUser.id);
+
+        if (error) throw error;
+
+        const { error: metadataError } = await supabase.auth.updateUser({
+            data: { username: newUsername }
         });
-        
-        changeUsernameBtn.addEventListener('click', showUsernameModal);
-        
-        // Initialize the app when the page loads
-        document.addEventListener('DOMContentLoaded', initializeApp);
-    </script>
+        if (metadataError) console.error('Error updating auth metadata:', metadataError);
+
+        currentUsername = newUsername;
+        usernameElement.textContent = newUsername;
+        usernameSuccess.style.display = 'flex';
+        usernameError.style.display = 'none';
+
+        setTimeout(() => hideUsernameModal(), 2000);
+    } catch (error) {
+        usernameErrorText.textContent = error.message;
+        usernameError.style.display = 'flex';
+        usernameSuccess.style.display = 'none';
+    } finally {
+        usernameLoading.style.display = 'none';
+    }
+});
+
+// Close modal if clicking outside
+usernameModal.addEventListener('click', (e) => {
+    if (e.target === usernameModal) hideUsernameModal();
+});
+
+// Logout
+logoutBtn.addEventListener('click', async () => {
+    await supabase.auth.signOut();
+    window.location.href = 'index.html';
+});
+
+// Escape HTML
+function escapeHtml(unsafe) {
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+// Event listeners
+sendButton.addEventListener('click', sendMessage);
+messageInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') sendMessage();
+});
+changeUsernameBtn.addEventListener('click', showUsernameModal);
+
+// Init
+document.addEventListener('DOMContentLoaded', initializeApp);
+</script>
 </body>
 </html>
