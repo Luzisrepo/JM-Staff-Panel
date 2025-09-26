@@ -7,7 +7,25 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    /* Reuse all existing CSS from the previous page */
+    /* Previous CSS remains the same, I'll just update the post-content styling */
+    
+    /* Updated post-content styling for better truncation */
+    .post-content {
+      color: #e0e0f0;
+      line-height: 1.6;
+      margin-bottom: 1rem;
+      word-wrap: break-word;
+      display: -webkit-box;
+      -webkit-line-clamp: 3; /* Limit to 3 lines */
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    /* Remove the previous gradient approach */
+    /* .post-content.truncated::after { ... } */
+    
+    /* Rest of your CSS remains unchanged */
     * {
       margin: 0;
       padding: 0;
@@ -266,12 +284,6 @@
       display: flex;
       gap: 1rem;
     }
-    .post-content {
-      color: #e0e0f0;
-      line-height: 1.6;
-      margin-bottom: 1rem;
-      word-wrap: break-word;
-    }
     .post-content h1, .post-content h2, .post-content h3 {
       margin: 1rem 0;
       color: #4cc9f0;
@@ -453,6 +465,25 @@
     }
     .post-modal-body {
       line-height: 1.6;
+    }
+    .post-modal-body h1, .post-modal-body h2, .post-modal-body h3 {
+      margin: 1rem 0;
+      color: #4cc9f0;
+    }
+    .post-modal-body h1 {
+      font-size: 1.8rem;
+      border-bottom: 1px solid rgba(76, 201, 240, 0.3);
+      padding-bottom: 0.5rem;
+    }
+    .post-modal-body h2 {
+      font-size: 1.5rem;
+    }
+    .post-modal-body h3 {
+      font-size: 1.3rem;
+    }
+    .post-modal-body strong {
+      font-weight: bold;
+      color: #fff;
     }
     .post-modal-meta {
       display: flex;
@@ -919,7 +950,11 @@
       // Combine posts (pinned first, then regular)
       const sortedPosts = [...pinnedPosts, ...regularPosts];
       
-      postsContainer.innerHTML = sortedPosts.map(post => `
+      postsContainer.innerHTML = sortedPosts.map(post => {
+        // Format the content for preview (CSS will handle truncation)
+        const previewContent = formatText(escapeHtml(post.content));
+        
+        return `
         <div class="post-card glass-panel ${post.pinned ? 'pinned' : ''}" data-post-id="${post.id}">
           ${isAuthorizedUser() ? `
             <div class="post-actions">
@@ -941,14 +976,14 @@
               </div>
             </div>
           </div>
-          <div class="post-content">${formatText(escapeHtml(post.content))}</div>
+          <div class="post-content">${previewContent}</div>
           ${post.tags ? `
             <div class="post-tags">
               ${post.tags.split(',').map(tag => `<span class="tag">${escapeHtml(tag.trim())}</span>`).join('')}
             </div>
           ` : ''}
         </div>
-      `).join('');
+      `}).join('');
       
       // Add event listeners to post cards for modal
       document.querySelectorAll('.post-card').forEach(card => {
