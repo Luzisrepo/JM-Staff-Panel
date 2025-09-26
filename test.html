@@ -561,12 +561,11 @@
         </div>
     </main>
 
-    <script>
-// Supabase configuration - Use your actual credentials
+   <script>
+// Supabase configuration
 const SUPABASE_URL = 'https://dsesdziaqinixvxycxye.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRzZXNkemlhcWluaXh2eHljeHllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg3MzMxODgsImV4cCI6MjA3NDMwOTE4OH0.SH26LQCsFuZitSgE5Og79p7NULOhSZVeZijaIH7b1BE';
 
-// Initialize Supabase client
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // DOM elements
@@ -584,26 +583,32 @@ const usernameErrorText = document.getElementById('usernameErrorText');
 const usernameSuccess = document.getElementById('usernameSuccess');
 const usernameLoading = document.getElementById('usernameLoading');
 
-// Current user and username
+// Typing indicator
+const typingIndicator = document.createElement('div');
+typingIndicator.id = 'typing-indicator';
+typingIndicator.style.cssText = "font-size:12px;color:#888;margin:5px;";
+messagesContainer.parentNode.appendChild(typingIndicator);
+
+// State
 let currentUser = null;
 let currentUsername = null;
 let channel = null;
+let typingUsers = {}; // track multiple users typing
+let typingCleanupTimers = {};
 
-// Check authentication and initialize chat
+// Init app
 async function initializeApp() {
     const { data: { session } } = await supabase.auth.getSession();
-
     if (session && session.user) {
         currentUser = session.user;
         await loadUserProfile();
         initializeChat();
     } else {
-        // Redirect to login if not authenticated
         window.location.href = 'index.html';
     }
 }
 
-// Load user profile to get username
+// Load profile
 async function loadUserProfile() {
     try {
         const { data: profile, error } = await supabase
@@ -614,38 +619,34 @@ async function loadUserProfile() {
 
         if (!error && profile) {
             currentUsername = profile.username;
-            usernameElement.textContent = profile.username;
         } else {
             currentUsername = currentUser.user_metadata?.username || currentUser.email || 'Staff Member';
-            usernameElement.textContent = currentUsername;
         }
-    } catch (error) {
+        usernameElement.textContent = currentUsername;
+    } catch {
         currentUsername = currentUser.email || 'Staff Member';
         usernameElement.textContent = currentUsername;
     }
 }
 
-// Initialize the chat
+// Chat init
 async function initializeChat() {
     try {
-        channel = supabase.channel('staff-chat', {
-            config: { broadcast: { self: true } }
-        });
+        channel = supabase.channel('staff-chat', { config: { broadcast: { self: true } } });
 
-        // Listen for new messages in realtime
-        channel.on(
-            'postgres_changes',
-            {
-                event: 'INSERT',
-                schema: 'public',
-                table: 'staff_chat_messages'
-            },
-            (payload) => {
-                displayMessage(payload.new);
-            }
+        // 🔹 Listen for new messages via database changes
+        channel.on('postgres_changes',
+            { event: 'INSERT', schema: 'public', table: 'staff_chat_messages' },
+            (payload) => displayMessage(payload.new)
         );
 
-        // Subscribe
+        // 🔹 Listen for typing events
+        channel.on('broadcast', { event: 'typing' }, ({ payload }) => {
+            if (payload.userId !== currentUser.id) {
+                handleUserTyping(payload.userId, payload.username);
+            }
+        });
+
         channel.subscribe((status) => {
             if (status === 'SUBSCRIBED') {
                 connectionStatus.textContent = 'Connected to chat';
@@ -656,15 +657,14 @@ async function initializeChat() {
                 connectionStatus.style.color = '#ff6b6b';
             }
         });
-
-    } catch (error) {
-        console.error('Error initializing chat:', error);
+    } catch (err) {
+        console.error('Error initializing chat:', err);
         connectionStatus.textContent = 'Failed to connect. Please refresh.';
         connectionStatus.style.color = '#ff6b6b';
     }
 }
 
-// Load previous messages
+// Load history
 async function loadPreviousMessages() {
     try {
         const { data: messages, error } = await supabase
@@ -678,26 +678,25 @@ async function loadPreviousMessages() {
         messagesContainer.innerHTML = '';
         messages.forEach(msg => displayMessage(msg, false));
         scrollToBottom();
-    } catch (error) {
-        console.error('Error loading messages:', error);
+    } catch (err) {
+        console.error('Error loading messages:', err);
     }
 }
 
-// Display a message
+// Display message
 function displayMessage(message, animate = true) {
-    const messageElement = document.createElement('div');
+    const el = document.createElement('div');
     const isSelf = message.sender_id === currentUser.id;
-    messageElement.className = `message ${isSelf ? 'self' : 'other'}`;
+    el.className = `message ${isSelf ? 'self' : 'other'}`;
 
     const timestamp = new Date(message.created_at).toLocaleTimeString([], { 
-        hour: '2-digit', 
-        minute: '2-digit' 
+        hour: '2-digit', minute: '2-digit' 
     });
 
     const initials = message.sender_name ? 
         message.sender_name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) : '?';
 
-    messageElement.innerHTML = `
+    el.innerHTML = `
         <div class="message-header">
             <div class="message-avatar">${initials}</div>
             <span class="message-sender">${escapeHtml(message.sender_name)}</span>
@@ -706,11 +705,9 @@ function displayMessage(message, animate = true) {
         <div class="message-meta">${timestamp}</div>
     `;
 
-    if (animate) {
-        messageElement.style.animation = 'fadeInUp 0.3s ease';
-    }
+    if (animate) el.style.animation = 'fadeInUp 0.3s ease';
 
-    messagesContainer.appendChild(messageElement);
+    messagesContainer.appendChild(el);
     scrollToBottom();
 }
 
@@ -725,20 +722,12 @@ async function sendMessage() {
     try {
         const { error } = await supabase
             .from('staff_chat_messages')
-            .insert([{
-                content: content,
-                sender_id: currentUser.id,
-                sender_name: currentUsername
-            }]);
-
+            .insert([{ content, sender_id: currentUser.id, sender_name: currentUsername }]);
         if (error) throw error;
 
-        messageInput.value = ''; // Clear input
-
-        // no loadPreviousMessages() here! realtime will handle it
-
-    } catch (error) {
-        console.error('Error sending message:', error);
+        messageInput.value = '';
+    } catch (err) {
+        console.error('Error sending message:', err);
         alert('Failed to send message. Please try again.');
     } finally {
         sendButton.disabled = false;
@@ -746,7 +735,41 @@ async function sendMessage() {
     }
 }
 
-// Scroll to bottom
+// Typing indicator handling
+function handleUserTyping(userId, username) {
+    typingUsers[userId] = username;
+
+    // Reset any existing cleanup timer
+    if (typingCleanupTimers[userId]) clearTimeout(typingCleanupTimers[userId]);
+
+    typingCleanupTimers[userId] = setTimeout(() => {
+        delete typingUsers[userId];
+        updateTypingIndicator();
+    }, 2000);
+
+    updateTypingIndicator();
+}
+
+function updateTypingIndicator() {
+    const names = Object.values(typingUsers);
+    if (names.length === 0) {
+        typingIndicator.textContent = '';
+    } else if (names.length === 1) {
+        typingIndicator.textContent = `${names[0]} is typing...`;
+    } else {
+        typingIndicator.textContent = `${names.join(' and ')} are typing...`;
+    }
+}
+
+function broadcastTyping() {
+    channel.send({
+        type: 'broadcast',
+        event: 'typing',
+        payload: { userId: currentUser.id, username: currentUsername }
+    });
+}
+
+// Scroll
 function scrollToBottom() {
     setTimeout(() => {
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
@@ -754,9 +777,7 @@ function scrollToBottom() {
 }
 
 // Username modal
-function showUsernameModal() {
-    usernameModal.classList.remove('hidden');
-}
+function showUsernameModal() { usernameModal.classList.remove('hidden'); }
 function hideUsernameModal() {
     usernameModal.classList.add('hidden');
     usernameForm.reset();
@@ -764,7 +785,7 @@ function hideUsernameModal() {
     usernameSuccess.style.display = 'none';
 }
 
-// Username change
+// Username change (unchanged)
 usernameForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const newUsername = document.getElementById('newUsername').value;
@@ -792,59 +813,41 @@ usernameForm.addEventListener('submit', async (e) => {
             .from('user_profiles')
             .update({ username: newUsername, updated_at: new Date().toISOString() })
             .eq('id', currentUser.id);
-
         if (error) throw error;
 
-        const { error: metadataError } = await supabase.auth.updateUser({
-            data: { username: newUsername }
-        });
-        if (metadataError) console.error('Error updating auth metadata:', metadataError);
+        const { error: metaErr } = await supabase.auth.updateUser({ data: { username: newUsername } });
+        if (metaErr) console.error('Error updating auth metadata:', metaErr);
 
         currentUsername = newUsername;
         usernameElement.textContent = newUsername;
         usernameSuccess.style.display = 'flex';
-        usernameError.style.display = 'none';
-
         setTimeout(() => hideUsernameModal(), 2000);
-    } catch (error) {
-        usernameErrorText.textContent = error.message;
+    } catch (err) {
+        usernameErrorText.textContent = err.message;
         usernameError.style.display = 'flex';
-        usernameSuccess.style.display = 'none';
     } finally {
         usernameLoading.style.display = 'none';
     }
 });
 
-// Close modal if clicking outside
-usernameModal.addEventListener('click', (e) => {
-    if (e.target === usernameModal) hideUsernameModal();
-});
-
-// Logout
-logoutBtn.addEventListener('click', async () => {
-    await supabase.auth.signOut();
-    window.location.href = 'index.html';
-});
-
-// Escape HTML
+// Misc
+usernameModal.addEventListener('click', (e) => { if (e.target === usernameModal) hideUsernameModal(); });
+logoutBtn.addEventListener('click', async () => { await supabase.auth.signOut(); window.location.href = 'index.html'; });
 function escapeHtml(unsafe) {
-    return unsafe
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+    return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
 
-// Event listeners
+// Events
 sendButton.addEventListener('click', sendMessage);
 messageInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') sendMessage();
+    else broadcastTyping();
 });
+messageInput.addEventListener('input', () => broadcastTyping());
 changeUsernameBtn.addEventListener('click', showUsernameModal);
-
-// Init
 document.addEventListener('DOMContentLoaded', initializeApp);
 </script>
+
 </body>
 </html>
