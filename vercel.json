@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    { "source": "/home", "destination": "/index.html" },
+    { "source": "/forums", "destination": "/forums.html" },
+    { "source": "/chat", "destination": "/chat.html" },
+    { "source": "/panel", "destination": "/Panel.html" }
+  ]
+}
