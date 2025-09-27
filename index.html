@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>JM Solutions Staff Portal</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -320,11 +320,21 @@
             opacity: 1;
         }
 
+        /* Fix particle background (moved above content and non-interactive) */
         #particles-js {
-            position: absolute;
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
-            z-index: -1;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Ensure content sits above particles */
+        .main-content, header, nav, main, footer {
+            position: relative;
+            z-index: 1;
         }
 
         header {
@@ -664,29 +674,29 @@
                 flex-wrap: wrap;
                 justify-content: center;
             }
-            
+
             header {
                 flex-direction: column;
                 gap: 1rem;
                 text-align: center;
             }
-            
+
             .user-info {
                 align-self: center;
             }
-            
+
             .hero h2 {
                 font-size: 2.5rem;
             }
-            
+
             .hero p {
                 font-size: 1.1rem;
             }
-            
+
             .features-grid {
                 grid-template-columns: 1fr;
             }
-            
+
             .login-container {
                 padding: 2rem;
                 margin: 1rem;
@@ -703,27 +713,27 @@
                 <h1>JM Solutions</h1>
                 <p>Staff Portal Access</p>
             </div>
-            
+
             <form class="login-form" id="loginForm">
                 <div class="form-group">
                     <label for="email"><i class="fas fa-envelope"></i> Email</label>
                     <input type="email" id="email" required placeholder="Enter your email">
                 </div>
-                
+
                 <div class="form-group">
                     <label for="password"><i class="fas fa-lock"></i> Password</label>
                     <input type="password" id="password" required placeholder="Enter your password">
                 </div>
-                
+
                 <button type="submit" class="login-btn">
                     <i class="fas fa-sign-in-alt"></i> Login to Portal
                 </button>
-                
+
                 <div class="loading" id="loading">
                     <div class="spinner"></div>
                     <p>Authenticating...</p>
                 </div>
-                
+
                 <div class="error-message" id="errorMessage">
                     <i class="fas fa-exclamation-triangle"></i>
                     <span id="errorText">Invalid credentials. Please try again.</span>
@@ -737,31 +747,31 @@
         <div class="username-container">
             <form class="username-form" id="usernameForm">
                 <h3><i class="fas fa-user-edit"></i> Change Username</h3>
-                
+
                 <div class="form-group">
                     <label for="newUsername">New Username</label>
                     <input type="text" id="newUsername" required placeholder="Enter your new username">
                 </div>
-                
+
                 <div class="form-group">
                     <label for="confirmUsername">Confirm Username</label>
                     <input type="text" id="confirmUsername" required placeholder="Confirm your new username">
                 </div>
-                
+
                 <button type="submit" class="username-btn">
                     <i class="fas fa-save"></i> Update Username
                 </button>
-                
+
                 <div class="username-loading" id="usernameLoading">
                     <div class="spinner"></div>
                     <p>Updating username...</p>
                 </div>
-                
+
                 <div class="username-error" id="usernameError">
                     <i class="fas fa-exclamation-triangle"></i>
                     <span id="usernameErrorText">Error updating username. Please try again.</span>
                 </div>
-                
+
                 <div class="username-success" id="usernameSuccess">
                     <i class="fas fa-check-circle"></i>
                     <span>Username updated successfully!</span>
@@ -829,7 +839,7 @@
                     </div>
                     <div class="feature-card">
                         <div class="feature-icon">
-                            <i class="fas fa-comment-dots">
+                            <i class="fas fa-comment-dots"></i>
                         </div>
                         <h3>Live Chat</h3>
                         <p>Talk to other staff members in real time!</p>
@@ -850,10 +860,10 @@
         // Supabase configuration
         const supabaseUrl = 'https://dsesdziaqinixvxycxye.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRzZXNkemlhcWluaXh2eHljeHllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg3MzMxODgsImV4cCI6MjA3NDMwOTE4OH0.SH26LQCsFuZitSgE5Og79p7NULOhSZVeZijaIH7b1BE';
-        
+
         // Initialize Supabase client
         const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-        
+
         // DOM elements
         const loginModal = document.getElementById('loginModal');
         const mainContent = document.getElementById('mainContent');
@@ -877,17 +887,22 @@
 
         // Check if user is already logged in
         async function checkAuth() {
-            const { data: { session } } = await supabase.auth.getSession();
-            
-            if (session) {
-                currentUser = session.user;
-                await loadUserProfile();
-                showMainContent(currentUser);
-            } else {
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+
+                if (session) {
+                    currentUser = session.user;
+                    await loadUserProfile();
+                    showMainContent(currentUser);
+                } else {
+                    showLoginModal();
+                }
+            } catch (err) {
+                // If anything goes wrong, show login to avoid locking users out
                 showLoginModal();
             }
         }
-        
+
         // Load user profile to get username
         async function loadUserProfile() {
             try {
@@ -897,7 +912,7 @@
                     .select('username')
                     .eq('id', currentUser.id)
                     .single();
-                
+
                 if (!error && profile) {
                     currentUsername = profile.username;
                     userName.textContent = profile.username;
@@ -912,29 +927,29 @@
                 userName.textContent = currentUsername;
             }
         }
-        
+
         // Show login modal
         function showLoginModal() {
             loginModal.classList.remove('hidden');
             mainContent.classList.remove('active');
             usernameModal.classList.add('hidden');
         }
-        
+
         // Show main content
         function showMainContent(user) {
             loginModal.classList.add('hidden');
             mainContent.classList.add('active');
-            
+
             if (user) {
                 userName.textContent = currentUsername || user.email || 'Staff Member';
             }
         }
-        
+
         // Show username change modal
         function showUsernameModal() {
             usernameModal.classList.remove('hidden');
         }
-        
+
         // Hide username change modal
         function hideUsernameModal() {
             usernameModal.classList.add('hidden');
@@ -942,41 +957,41 @@
             usernameError.style.display = 'none';
             usernameSuccess.style.display = 'none';
         }
-        
+
         // Handle login form submission
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            
+
             // Show loading state
             loading.style.display = 'block';
             errorMessage.style.display = 'none';
-            
+
             try {
                 const { data, error } = await supabase.auth.signInWithPassword({
                     email,
                     password
                 });
-                
+
                 if (error) {
                     throw error;
                 }
-                
+
                 if (data.user) {
                     currentUser = data.user;
                     await loadUserProfile();
                     showMainContent(data.user);
                 }
             } catch (error) {
-                errorText.textContent = error.message;
+                errorText.textContent = error.message || 'Login failed.';
                 errorMessage.style.display = 'flex';
             } finally {
                 loading.style.display = 'none';
             }
         });
-        
+
         // Handle logout
         logoutBtn.addEventListener('click', async () => {
             await supabase.auth.signOut();
@@ -985,19 +1000,19 @@
             showLoginModal();
             loginForm.reset();
         });
-        
+
         // Handle username change button click
         changeUsernameBtn.addEventListener('click', () => {
             showUsernameModal();
         });
-        
+
         // Handle username form submission
         usernameForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
             const newUsername = document.getElementById('newUsername').value;
             const confirmUsername = document.getElementById('confirmUsername').value;
-            
+
             // Validate inputs
             if (newUsername !== confirmUsername) {
                 usernameErrorText.textContent = 'Usernames do not match.';
@@ -1005,19 +1020,19 @@
                 usernameSuccess.style.display = 'none';
                 return;
             }
-            
+
             if (newUsername.length < 3) {
                 usernameErrorText.textContent = 'Username must be at least 3 characters long.';
                 usernameError.style.display = 'flex';
                 usernameSuccess.style.display = 'none';
                 return;
             }
-            
+
             // Show loading state
             usernameLoading.style.display = 'block';
             usernameError.style.display = 'none';
             usernameSuccess.style.display = 'none';
-            
+
             try {
                 // Update user profile in the public.user_profiles table
                 const { data, error } = await supabase
@@ -1027,87 +1042,99 @@
                         updated_at: new Date().toISOString()
                     })
                     .eq('id', currentUser.id);
-                
+
                 if (error) {
                     throw error;
                 }
-                
+
                 // Also update user metadata in auth.users
                 const { error: metadataError } = await supabase.auth.updateUser({
                     data: { username: newUsername }
                 });
-                
+
                 if (metadataError) {
                     console.error('Error updating auth metadata:', metadataError);
                 }
-                
+
                 // Update the displayed username
                 currentUsername = newUsername;
                 userName.textContent = newUsername;
-                
+
                 // Show success message
                 usernameSuccess.style.display = 'flex';
                 usernameError.style.display = 'none';
-                
+
                 // Hide modal after 2 seconds
                 setTimeout(() => {
                     hideUsernameModal();
                 }, 2000);
-                
+
             } catch (error) {
-                usernameErrorText.textContent = error.message;
+                usernameErrorText.textContent = error.message || 'Update failed.';
                 usernameError.style.display = 'flex';
                 usernameSuccess.style.display = 'none';
             } finally {
                 usernameLoading.style.display = 'none';
             }
         });
-        
+
         // Close username modal when clicking outside
         usernameModal.addEventListener('click', (e) => {
             if (e.target === usernameModal) {
                 hideUsernameModal();
             }
         });
-        
-        // Initialize particles.js
+
+        // Initialize particles.js and auth check
         document.addEventListener('DOMContentLoaded', function() {
             checkAuth();
-            
-            if (window.particlesJS) {
-                particlesJS('particles-js', {
-                    particles: {
-                        number: { value: 80, density: { enable: true, value_area: 800 } },
-                        color: { value: "#4cc9f0" },
-                        shape: { type: "circle" },
-                        opacity: { value: 0.5, random: true },
-                        size: { value: 3, random: true },
-                        line_linked: {
-                            enable: true,
-                            distance: 150,
-                            color: "#4361ee",
-                            opacity: 0.4,
-                            width: 1
+
+            // Initialize particles if available
+            const initParticles = () => {
+                if (window.particlesJS) {
+                    particlesJS('particles-js', {
+                        particles: {
+                            number: { value: 80, density: { enable: true, value_area: 800 } },
+                            color: { value: "#4cc9f0" },
+                            shape: { type: "circle" },
+                            opacity: { value: 0.5, random: true },
+                            size: { value: 3, random: true },
+                            line_linked: {
+                                enable: true,
+                                distance: 150,
+                                color: "#4361ee",
+                                opacity: 0.4,
+                                width: 1
+                            },
+                            move: {
+                                enable: true,
+                                speed: 2,
+                                direction: "none",
+                                random: true,
+                                straight: false,
+                                out_mode: "out",
+                                bounce: false
+                            }
                         },
-                        move: {
-                            enable: true,
-                            speed: 2,
-                            direction: "none",
-                            random: true,
-                            straight: false,
-                            out_mode: "out",
-                            bounce: false
+                        interactivity: {
+                            detect_on: "canvas",
+                            events: {
+                                onhover: { enable: true, mode: "repulse" },
+                                onclick: { enable: true, mode: "push" }
+                            }
                         }
-                    },
-                    interactivity: {
-                        detect_on: "canvas",
-                        events: {
-                            onhover: { enable: true, mode: "repulse" },
-                            onclick: { enable: true, mode: "push" }
-                        }
-                    }
-                });
-            }
+                    });
+                } else {
+                    // particles.js not loaded or blocked — silently ignore
+                    // (this prevents runtime errors when CDN fails)
+                }
+            };
+
+            // Attempt to initialize particles after a small delay to allow the CDN script to load
+            // If the CDN loads after DOMContentLoaded, this will still work because particlesJS is checked.
+            setTimeout(initParticles, 150);
+            // Also try once more later in case of slow network
+            setTimeout(initParticles, 1000);
         });
     </script>
 </body>
